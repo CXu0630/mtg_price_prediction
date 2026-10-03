@@ -1,0 +1,34 @@
+[project]
+name = "mtg-price-prediction"
+version = "0.1.0"
+description = "Predicts a price range for an MTG card printing (released or unreleased) from a comps/similarity model over rarity, mechanical properties, art, and usage data. See SPECS.md."
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.2",
+    "pyarrow>=14.0",
+    "numpy>=1.26",
+    "huggingface_hub>=0.24",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "jupyter>=1.0", "ipykernel>=6.0"]
+# Modeling stack (training + inference for Model 1 / Model 2, SPECS.md §4),
+# kept separate so the base env stays fast to set up.
+ml = [
+    "scikit-learn>=1.4",
+    "lightgbm>=4.3",
+    "catboost>=1.2",
+    "torch>=2.2",
+    "gpytorch>=1.11",
+    "safetensors>=0.4",
+    "sentence-transformers>=3.0",
+    "open-clip-torch>=2.24",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

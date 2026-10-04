@@ -75,12 +75,20 @@ export function CardShowcase({ deck: deckIn, burst }: Props) {
     }
   }, [deck]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const startBurst = (face?: Face) => {
+    const a0 = angle.current
+    burstState.current = { a0, aT: Math.ceil((a0 + BURST_TURNS * 360) / 360) * 360, t0: performance.now(), face, swapped: false }
+  }
   useEffect(() => {
     if (!burst) return
     if (reduceMotion()) { if (burst.face) setFront(burst.face); return }
-    const a0 = angle.current
-    burstState.current = { a0, aT: Math.ceil((a0 + BURST_TURNS * 360) / 360) * 360, t0: performance.now(), face: burst.face, swapped: false }
+    startBurst(burst.face)
   }, [burst?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Just for fun: clicking the card gives it a spin, landing back on whatever it was showing (or headed to).
+  const spinForFun = () => {
+    if (reduceMotion()) return
+    startBurst(burstState.current?.face)
+  }
 
   useEffect(() => {
     if (reduceMotion()) {
@@ -135,7 +143,7 @@ export function CardShowcase({ deck: deckIn, burst }: Props) {
   return (
     <div className="showcase" aria-hidden="true">
       <div className="stage">
-        <div className="card3d" ref={cardRef}>
+        <div className="card3d" ref={cardRef} onClick={spinForFun}>
           {front.custom
             ? <div className="face front face-custom"><CustomFront card={front.custom} /></div>
             : <img className="face front" src={front.src} alt="" draggable={false} />}

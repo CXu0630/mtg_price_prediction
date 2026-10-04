@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FocusBody, FocusHeader, focusLeaveMs, useCardInfo } from './components/CardFocus'
 import { FlipButton } from './components/FlipButton'
 import { DocBody, docLeaveMs } from './components/DocBody'
@@ -20,8 +20,7 @@ const SLOT_FLIP_MS = 750 // allow the add-card slot's 700ms turn to finish
 const SHIFT_STEP_MS = 120 // each following card starts its turn after the previous one
 const WAVE_STEP_MS = 90 // matches the grid's diagonal wave
 const FLIP_MS = 750 // matches .tile-inner's transition
-const INTRO_TITLE_MS = 950 // the title turns over at the middle of the screen (its 0.9s flip, plus a beat)
-const INTRO_RISE_MS = 800 // then glides up to its place (matches .intro-rise's transition)
+const INTRO_MS = 900 // the left card spins alone for this long before the page arrives
 const EDGE_ON = 0.14 // .tile-inner's cubic-bezier(0.2, 0.7, 0.15, 1) passes 90° at ~14% of its duration
 const STEP_PAUSE_MS = 120 // a beat of empty space between one view leaving and the next arriving
 
@@ -93,26 +92,14 @@ export default function App() {
   const [docLeaving, setDocLeaving] = useState(false)
   const [holdRetract, setHoldRetract] = useState(false) // keeps the grid turned away for one frame after it's shown again
   const [burst, setBurst] = useState<{ id: number; face?: Face } | null>(null)
-  // Page-load intro, in phases: `pre` (first frame: title turned away, placed at the middle of the screen) ->
-  // `title` (the left card spins while the title turns over, still centred) -> `rise` (the title glides up to its
-  // place) -> done (the rest of the text fades in and the grid deals itself in). Nothing else can start meanwhile:
-  // the page is inert until it ends.
-  const [introPhase, setIntroPhase] = useState<'pre' | 'title' | 'rise' | null>(() =>
-    (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false) ? null : 'pre')
-  const intro = introPhase !== null
-  const [introShift, setIntroShift] = useState(0)
-  useLayoutEffect(() => { // how far the title sits from the middle of the screen
-    if (introPhase !== 'pre') return
-    const r = document.querySelector('.flip-face[aria-hidden="false"] .title-turn')?.getBoundingClientRect()
-    if (r) setIntroShift(Math.round(window.innerHeight / 2 - (r.top + r.height / 2)))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Page-load intro: the left card spins on its own first, then the title turns over out of the background
+  // while the rest of the text and buttons fade in and the grid deals itself in. The page is inert meanwhile.
+  const [intro, setIntro] = useState(() => !(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false))
   useEffect(() => {
-    if (introPhase !== 'pre') return
+    if (!intro) return
     setBurst({ id: 1 })
-    const raf = requestAnimationFrame(() => requestAnimationFrame(() => setIntroPhase('title')))
-    const t1 = window.setTimeout(() => setIntroPhase('rise'), INTRO_TITLE_MS)
-    const t2 = window.setTimeout(() => setIntroPhase(null), INTRO_TITLE_MS + INTRO_RISE_MS)
-    return () => { cancelAnimationFrame(raf); window.clearTimeout(t1); window.clearTimeout(t2) }
+    const t = window.setTimeout(() => setIntro(false), INTRO_MS)
+    return () => window.clearTimeout(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const freshTimers = useRef<number[]>([])
 
@@ -411,8 +398,7 @@ export default function App() {
   )
 
   return (
-    <div className={`shell ${intro ? `intro intro-${introPhase}` : ''}`} inert={intro}
-      style={intro ? { '--intro-shift': `${introShift}px` } as CSSProperties : undefined}>
+    <div className={`shell ${intro ? 'intro' : ''}`} inert={intro}>
       <button type="button" className="brand" aria-expanded={navOpen} aria-label="MTG Price Intelligence — pages"
         onClick={() => setNavOpen((o) => !o)}>
         <img src="./logo.svg" alt="" width={30} height={30} />
@@ -464,15 +450,12 @@ export default function App() {
               </div>
             )
             return <>
-              {/* eyebrow, title and description turn over together in the page-load intro */}
-              <div className="title-turn"><div className="title-block">
-                <p className="eyebrow">Magic: The Gathering</p>
-                <h1>MTG Price Intelligence</h1>
-                <p className="lede">
-                  Fair value, a 14-day TCGplayer forecast and a Card Kingdom buylist forecast for any list of
-                  printings — real or custom.
-                </p>
-              </div></div>
+              <p className="eyebrow">Magic: The Gathering</p>
+              <div className="title-turn"><h1>MTG Price Intelligence</h1></div>
+              <p className="lede">
+                Fair value, a 14-day TCGplayer forecast and a Card Kingdom buylist forecast for any list of
+                printings — real or custom.
+              </p>
               {modelControls()}
             </>
           }} />

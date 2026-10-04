@@ -22,9 +22,13 @@ ml = [
     "torch>=2.2",
     "gpytorch>=1.11",
     "safetensors>=0.4",
+    "ijson>=3.2",
     "sentence-transformers>=3.0",
     "open-clip-torch>=2.24",
 ]
+
+# Custom-card API (api/app.py) -- on top of [ml].
+api = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "pillow>=10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

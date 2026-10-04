@@ -1,0 +1,83 @@
+name: Nightly prices, models and site
+
+on:
+  schedule:
+    - cron: "30 7 * * *"   # daily, after MTGJSON's build (~06:10 UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/pipeline.txt
+
+      - name: Install pipeline (no torch -- deep-GP outputs come precomputed)
+        run: |
+          pip install -r requirements/pipeline.txt
+          pip install --no-deps -e .
+
+      - name: Fetch dataset, deep GP and precomputed GP outputs from Hugging Face
+        run: python scripts/app/assets.py fetch --no-app
+
+      - name: Refresh prices (MTGJSON AllPrices)
+        run: python scripts/app/refresh_prices.py
+
+      - name: Retrain Models A, B, C
+        run: python scripts/app/train_models.py
+
+      - name: Score every printing -> web/public/data
+        run: python scripts/app/score_all.py
+
+      - name: Publish app assets + restart the API Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          API_SPACE: ${{ vars.API_SPACE }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then echo "no HF_TOKEN secret: skipping"; exit 0; fi
+          python scripts/app/assets.py publish
+          if [ -n "$API_SPACE" ]; then python -c "from huggingface_hub import HfApi; HfApi().restart_space('$API_SPACE')"; fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build site
+        working-directory: web
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_API_URL: ${{ vars.API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

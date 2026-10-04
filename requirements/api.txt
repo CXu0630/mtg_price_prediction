@@ -1,0 +1,11 @@
+# Custom-card API (api/app.py, HF Space). Same pins as pipeline.txt for everything it unpickles.
+-r pipeline.txt
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+pillow==12.3.0
+safetensors==0.8.0
+gpytorch==1.15.2
+sentence-transformers==6.1.0
+open_clip_torch==3.3.0
+# torch: install the CPU wheel first (see api/Dockerfile) so pip doesn't pull CUDA builds
+torch==2.14.0

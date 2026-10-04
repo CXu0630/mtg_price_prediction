@@ -37,6 +37,28 @@ SPECS.md §4.1–4.2.
 - The live-comps staleness protection (SPECS.md §3) is not built.
 - No EDHREC usage join yet.
 
+## The app
+
+A web app over all of this: give it a list of cards (real printings or custom
+ones) and it returns fair value (Model A or the deep GP), a 14-day TCGplayer
+forecast with BUY/SELL/HOLD (Model B) and a 14-day Card Kingdom buylist forecast
+(Model C). Design and status: [docs/APP_DESIGN.md](docs/APP_DESIGN.md).
+
+Run it locally (after the "Setup" below, plus `pip install -e ".[ml,api]"`):
+
+```bash
+python scripts/app/refresh_prices.py      # today's prices from MTGJSON
+python scripts/app/train_models.py        # Models A, B, C (~8 min)
+python scripts/app/build_gp_static.py     # deep-GP values + comps (needs embeddings/, once)
+python scripts/app/score_all.py           # -> web/public/data
+uvicorn api.app:app --port 8000           # custom-card API
+cd web && npm install && npm run dev      # frontend at http://localhost:5173
+```
+
+In production the nightly GitHub Action (`.github/workflows/nightly.yml`) runs the
+first four steps and deploys the site to GitHub Pages; the API runs as a Hugging
+Face Docker Space (`scripts/app/deploy_space.py`).
+
 ## Using the published models
 
 Each HF repo bundles its own inference code (`mtg_price_prediction/`) and has
@@ -108,6 +130,13 @@ python scripts/export_models.py             # -> models/{catboost,deep_gp}/ (als
 python scripts/push_models_to_hub.py        # -> public HF repos above
 ```
 
+**5. Presentation figures** (needs the trained models from steps 2–3):
+
+```bash
+python scripts/experiments/feature_importance.py   # permutation importance -> figures/data/feature_importance.csv (~5 min)
+python scripts/make_figures.py                     # -> figures/price_distribution.png, figures/feature_importance.png
+```
+
 Model cards live in `model_cards/` and are copied in by the export. If you
 retrain, update the metrics tables in the cards.
 
@@ -119,6 +148,8 @@ retrain, update the metrics tables in the cards.
 | `scripts/` | The main pipeline, in the order above. |
 | `scripts/experiments/` | Tuning, ablation and alternative-model scripts behind the SPECS.md results (rebalancing, tag ablations, inducing-point sweep, robust likelihoods, quantile head, ...). Not needed to reproduce the best models. |
 | `model_cards/` | HF model card sources. |
+| `scripts/app/`, `api/`, `web/` | The app: nightly pipeline, custom-card API, React frontend ([docs/APP_DESIGN.md](docs/APP_DESIGN.md)). |
+| `figures/` | Presentation figures from `scripts/make_figures.py` (+ the data they're drawn from in `figures/data/`). |
 | `mtg-card-market-dataset/` | The joined training dataset (one row per printing × finish) and its docs: [README](mtg-card-market-dataset/README.md), [COLUMNS.md](mtg-card-market-dataset/COLUMNS.md). Published as [`CXu0630/mtg-card-market-dataset`](https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset). |
 | `mtg-card-prices/` | Third-party source data ([`pcwoods/mtg-card-prices`](https://huggingface.co/datasets/pcwoods/mtg-card-prices)). |
 | `card_art/`, `embeddings/` | Model 2's art crops and frozen embeddings. See each folder's README. |

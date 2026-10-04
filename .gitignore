@@ -30,6 +30,8 @@ training/best_tactics/
 training/collapse_fixes/
 training/tune_candidates_quantile/
 training/ablation_checkpoints_quantile/
+training/experiments/
+training/model_b/
 models/
 catboost_info/
 
@@ -47,3 +49,12 @@ embeddings/*.parquet
 # separate repo, tracked on its own -- don't let it get swept into this one
 mtg-print-distribution/
 
+
+# MTGGoldfish price history -- private academic use only, never publish (see
+# scripts/fetch_mtggoldfish_history.py)
+mtggoldfish/
+
+# app pipeline working data (prices refreshed nightly, models retrained) -- regenerated
+data/
+models/app/
+web/public/data/

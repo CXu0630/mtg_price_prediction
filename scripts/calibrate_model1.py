@@ -93,7 +93,13 @@ def _local_corrections(calib_median: np.ndarray, calib_scores: np.ndarray,
     return corrections
 
 
-def main() -> int:
+def main(drop_features: tuple[str, ...] = (), save: bool = True, extra_features=None,
+         random_seed: int = HYPERPARAMS["random_seed"]) -> dict:
+    """Trains + calibrates the best Model 1 config. `drop_features` removes
+    columns (ablations); `extra_features(fit_mask) -> DataFrame` adds
+    row-aligned columns, given a boolean mask of the fit rows so anything
+    price-derived can be computed from those only; `save=False` leaves
+    training/model1.* untouched. Returns the test metrics."""
     df = pd.read_parquet(FEATURES_PATH)
     y = df[TARGET_COL].to_numpy()
     groups = df[GROUP_COL].to_numpy()
@@ -109,13 +115,19 @@ def main() -> int:
     fit_idx, calib_idx = pool_idx[fit_idx], pool_idx[calib_idx]
 
     n_before = len(fit_idx)
+    fit_mask = np.zeros(len(df), bool)  # all fit rows, before rebalancing (for extra_features)
+    fit_mask[fit_idx] = True
     keep = _cap_bins(y[fit_idx], RESAMPLE_CAP_PER_BIN, RESAMPLE_N_BINS)
     fit_idx = fit_idx[keep]
     print(f"fit: {n_before} -> {len(fit_idx)} rows (rebalanced) | "
           f"calibration: {len(calib_idx)} rows (natural dist.) | test: {len(test_idx)} rows (natural dist.)")
 
-    cols = _feature_cols_for(all_feature_cols, ABLATIONS["A_fundamentals"])
+    cols = [c for c in _feature_cols_for(all_feature_cols, ABLATIONS["A_fundamentals"]) if c not in drop_features]
     X = df[cols].copy()
+    if extra_features is not None:
+        extra = extra_features(fit_mask).set_index(X.index)
+        X = pd.concat([X, extra], axis=1)
+        cols = cols + list(extra.columns)
     cat_features = [c for c in cols if X[c].dtype == "object" or str(X[c].dtype) == "str"]
     for c in cat_features:
         X[c] = X[c].fillna("__missing__").astype(str)
@@ -126,7 +138,8 @@ def main() -> int:
     # (those landed close to CatBoost's own defaults).
     model = CatBoostRegressor(
         loss_function=f"MultiQuantile:alpha={','.join(str(q) for q in QUANTILES)}",
-        **HYPERPARAMS, verbose=False, allow_writing_files=False, cat_features=cat_features,
+        **{**HYPERPARAMS, "random_seed": random_seed}, verbose=False, allow_writing_files=False,
+        cat_features=cat_features,
     )
     calib_pool_for_stopping = Pool(X.iloc[calib_idx], y[calib_idx], cat_features=cat_features)
     model.fit(Pool(X.iloc[fit_idx], y[fit_idx], cat_features=cat_features),
@@ -185,6 +198,8 @@ def main() -> int:
                                "coverage_raw": float(cov_raw_all), "coverage_calibrated": float(cov_cal_all),
                                "width_calibrated": float(np.mean(p90_cal - p10_cal))}
 
+    if not save:
+        return test_metrics
     model.save_model(str(MODEL_OUT_PATH))
     CALIBRATION_OUT_PATH.write_text(json.dumps({
         "quantiles": QUANTILES,
@@ -216,8 +231,8 @@ def main() -> int:
         cov_all = np.mean((test_y >= p10_local) & (test_y <= p90_local))
         print(f"{'OVERALL':10s} {len(test_y):6d} {cov_all:9.3f}")
 
-    return 0
+    return test_metrics
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

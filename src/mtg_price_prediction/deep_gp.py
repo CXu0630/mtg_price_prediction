@@ -28,7 +28,8 @@ CATEGORICAL_COLS = [
 # these need an explicit fresh _isna flag + impute here.
 NEEDS_ISNA_FLAG = ["power", "toughness", "loyalty", "defense"]
 # All continuous (non-boolean) numeric columns -- standardized on train
-# stats. Everything else in the wide feature set is already 0/1 boolean.
+# stats (plus pull rates and any `num__*` column, see fit_preprocessor).
+# Everything else in the wide feature set is already 0/1 boolean.
 NUMERIC_TO_SCALE = (
     ["conv_mana_cost", "power", "toughness", "loyalty", "defense",
      "edhrec_rank", "edhrec_salt", "penny_rank", "num_paper_printings"]
@@ -65,8 +66,10 @@ def fit_preprocessor(df: pd.DataFrame, train_idx: np.ndarray) -> dict:
     df = _add_isna_flags(df)
     train = df.iloc[train_idx]
 
-    rate_cols = [c for c in df.columns if c.endswith("_rate_percent")]
-    numeric_to_scale = NUMERIC_TO_SCALE + rate_cols
+    # Continuous columns: the fixed list, pull rates, and any experiment-added
+    # `num__*` column; ones absent from this feature table (ablations) skipped.
+    extra_numeric = [c for c in df.columns if c.endswith("_rate_percent") or c.startswith("num__")]
+    numeric_to_scale = [c for c in NUMERIC_TO_SCALE + extra_numeric if c in df.columns]
     wide_cols = [c for c in df.columns if c not in CATEGORICAL_COLS and not c.startswith("__")]
 
     medians = {}

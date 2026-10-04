@@ -7,15 +7,15 @@ import { Bars, Histogram, PairedBars, Stats, Table, count, money } from './chart
    reports/C_final_test.md, reports/E_bot_rules.md). The exploration numbers come from
    scripts/app/build_explore_stats.py (-> explore.json). Update them together. */
 
-export type PageId = 'predictor' | 'docs' | 'bots' | 'data'
+export type PageId = 'predictor' | 'docs' | 'backtest' | 'data'
 
 export const PAGES: { id: PageId; label: string; title: string; eyebrow: string; lede: string }[] = [
   { id: 'predictor', label: 'Predictor', title: 'MTG Price Intelligence', eyebrow: 'Magic: The Gathering',
     lede: '' },
   { id: 'docs', label: 'Docs', title: 'Documentation', eyebrow: 'How it works',
     lede: 'What each number on a card means, which model produces it, how far to trust it, and how the site is built and kept fresh.' },
-  { id: 'bots', label: 'Bot Trading', title: 'Bot Trading', eyebrow: 'Paper trading',
-    lede: 'Do the forecasts make money at prices you can actually trade at? A paper-trading bot with $100 of fake money, real costs and no look-ahead says: not reliably.' },
+  { id: 'backtest', label: 'Backtesting', title: 'Backtesting', eyebrow: 'Strategy backtest',
+    lede: 'Do the forecasts make money at prices you can actually trade at? A walk-forward backtest of simple trading rules, with $100 of simulated cash, real costs and no look-ahead, says: not reliably.' },
   { id: 'data', label: 'Data Exploration', title: 'Data Exploration', eyebrow: 'The dataset',
     lede: `What ${count(explore.totals.priced)} priced printings look like: where the money is, what makes a card expensive, and how prices moved over one summer.` },
 ]
@@ -47,7 +47,7 @@ const DOCS: Block[] = [
       <dt>HOLD</dt><dd>Anything else, and always when the price more than doubled in the last week without
         confirmation from other markets (an unconfirmed jump).</dd>
     </dl>
-  ), note: 'A signal is about TCGplayer\'s market price, a lagging sales average, not a price you can buy at. See Bot Trading.' },
+  ), note: 'A signal is about TCGplayer\'s market price, a lagging sales average, not a price you can buy at. See Backtesting.' },
   { key: 'models', title: 'The models', body: (
     <Table head={['', 'Question', 'Learns from', 'Gives']} rows={[
       ['Boosted trees (fair value)', 'What should this printing cost, from what it is?',
@@ -110,8 +110,8 @@ const DOCS: Block[] = [
   ) },
 ]
 
-// ---------------------------------------------------------------- Bot trading
-const BOTS: Block[] = [
+// ---------------------------------------------------------------- Backtesting
+const BACKTEST: Block[] = [
   { key: 'headline', body: (
     <Stats items={[
       { label: 'Best rule, final week', value: '+13.7%', note: 'cash, buylist rule' },
@@ -119,7 +119,7 @@ const BOTS: Block[] = [
       { label: 'Random picks', value: '−43.9%', note: 'same prices and costs' },
     ]} />
   ) },
-  { key: 'how', title: 'How the bot trades', body: (
+  { key: 'how', title: 'How the simulated trader works', body: (
     <ul className="doc-list">
       <li>Starts with $100 of fake money and up to 5 positions; at most 4 copies of a printing, each printing once per run.</li>
       <li>Buys at the cheapest real ask, not TCGplayer's market price, and only printings priced $1 or more.</li>
@@ -160,7 +160,7 @@ const BOTS: Block[] = [
     <ul className="doc-list">
       <li>The forecasts rank 14-day moves (rank correlation 0.22–0.24 out of sample), but the edge is a few percent, far below trading costs.</li>
       <li>The only rule that made cash is really “buy where CK's buylist already covers the ask”, and it depends on every copy grading near-mint.</li>
-      <li>Uncapped, the bot looked far better (+77% in the final week); all of that came from CK offers that are probably bad data.</li>
+      <li>Uncapped, the backtest looked far better (+77% in the final week); all of that came from CK offers that are probably bad data.</li>
       <li>The fair-value gap keeps predicting even at the extremes, but by about +0.5% from the ask: nowhere near the 13% TCGplayer fee.</li>
     </ul>
   ) },
@@ -170,7 +170,7 @@ const BOTS: Block[] = [
       <li>Fills are assumed: 4 copies at the ask, and CK taking every copy at its posted price.</li>
       <li>CK's own prices can't be verified within its terms; they are judged only against other markets.</li>
     </ul>
-  ), note: 'Bot and reports by the teammate project (pwoodsCMU/mtgpricepredictor): paper_trade.py, reports/A3_buylist_bot.md, reports/C_final_test.md.' },
+  ), note: 'Backtest and reports by the teammate project (pwoodsCMU/mtgpricepredictor): paper_trade.py, reports/A3_buylist_bot.md, reports/C_final_test.md.' },
 ]
 
 // ---------------------------------------------------------------- Data exploration
@@ -218,4 +218,4 @@ const DATA: Block[] = [
   ) },
 ]
 
-export const PAGE_BLOCKS: Record<Exclude<PageId, 'predictor'>, Block[]> = { docs: DOCS, bots: BOTS, data: DATA }
+export const PAGE_BLOCKS: Record<Exclude<PageId, 'predictor'>, Block[]> = { docs: DOCS, backtest: BACKTEST, data: DATA }

@@ -17,16 +17,16 @@ export const TREASURE: Face = { key: 'treasure', src: scryfallImage('46a2c363-c8
  *   custom  custom-card form   Fabricate (HOP)
  *   card    one card's results the card itself
  *   docs    Documentation      Library of Leng (ME4)
- *   bots    Bot Trading        Stock Up (DFT)
+ *   backtest Backtesting       Stock Up (DFT)
  *   data    Data Exploration   Exploration (DMR)
  */
-export type ShowcaseState = 'cards' | 'prices' | 'search' | 'custom' | 'card' | 'docs' | 'bots' | 'data'
+export type ShowcaseState = 'cards' | 'prices' | 'search' | 'custom' | 'card' | 'docs' | 'backtest' | 'data'
 export const STATE_CARD: Record<Exclude<ShowcaseState, 'cards' | 'card'>, Face> = {
   prices: TREASURE,
   search: { key: 'vampiric-tutor', src: scryfallImage('18bd50f2-c3ba-4217-a2d5-bb771e199706', 'normal') },
   custom: { key: 'fabricate', src: scryfallImage('44e49332-b1e1-4b88-b508-516b55c67a1d', 'normal') },
   docs: { key: 'library-of-leng', src: scryfallImage('c2fbf45f-9599-42e2-8510-7e20731e6c68', 'normal') },
-  bots: { key: 'stock-up', src: scryfallImage('0a786855-6eb4-42c0-a528-4842db46809d', 'normal') },
+  backtest: { key: 'stock-up', src: scryfallImage('0a786855-6eb4-42c0-a528-4842db46809d', 'normal') },
   data: { key: 'exploration', src: scryfallImage('5b372045-a4a0-44c8-96ec-1e201d61ed26', 'normal') },
 }
 

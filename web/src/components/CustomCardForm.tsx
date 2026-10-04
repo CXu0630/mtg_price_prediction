@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { search } from '../data'
 import type { CustomCardInput, Demand, SearchIndex } from '../types'
+import { Dropdown } from './Dropdown'
 
 const DEMANDS: { value: Demand; label: string }[] = [
   { value: 'staple', label: 'Staple (top ~2% of Commander play)' },
@@ -33,7 +34,7 @@ export function CustomCardForm({ index, onAdd, onCancel }: Props) {
   const [reprintQuery, setReprintQuery] = useState('')
   const reprintHits = useMemo(() => {
     if (!index || reprintQuery === card.reprint_of) return []
-    return [...new Set(search(index, reprintQuery, 40).map((h) => h.name))].slice(0, 8)
+    return [...new Set(search(index, { name: reprintQuery }, 40).map((h) => h.name))].slice(0, 8)
   }, [index, reprintQuery, card.reprint_of])
 
   return (
@@ -61,26 +62,21 @@ export function CustomCardForm({ index, onAdd, onCancel }: Props) {
           <input value={card.toughness ?? ''} onChange={(e) => set('toughness', e.target.value || undefined)} /></label>
         <label className="field"><span>Loyalty</span>
           <input value={card.loyalty ?? ''} onChange={(e) => set('loyalty', e.target.value || undefined)} /></label>
-        <label className="field"><span>Rarity</span>
-          <select value={card.rarity} onChange={(e) => set('rarity', e.target.value as CustomCardInput['rarity'])}>
-            {['common', 'uncommon', 'rare', 'mythic', 'special', 'bonus'].map((r) => <option key={r}>{r}</option>)}
-          </select></label>
-        <label className="field"><span>Finish</span>
-          <select value={card.finish} onChange={(e) => set('finish', e.target.value as CustomCardInput['finish'])}>
-            {['nonfoil', 'foil', 'etched'].map((f) => <option key={f}>{f}</option>)}
-          </select></label>
-        <label className="field"><span>Set type</span>
-          <select value={card.set_type} onChange={(e) => set('set_type', e.target.value)}>
-            {['expansion', 'core', 'masters', 'commander', 'draft_innovation', 'funny', 'promo'].map((s) => <option key={s}>{s}</option>)}
-          </select></label>
-        <label className="field"><span>Border</span>
-          <select value={card.border_color} onChange={(e) => set('border_color', e.target.value)}>
-            {['black', 'borderless', 'white', 'silver', 'gold'].map((b) => <option key={b}>{b}</option>)}
-          </select></label>
-        <label className="field"><span>Frame</span>
-          <select value={card.frame} onChange={(e) => set('frame', e.target.value)}>
-            {['2015', '1997', '1993', 'future'].map((f) => <option key={f}>{f}</option>)}
-          </select></label>
+        <div className="field"><span>Rarity</span>
+          <Dropdown value={card.rarity} options={['common', 'uncommon', 'rare', 'mythic', 'special', 'bonus'].map((v) => ({ value: v, label: v }))}
+            onChange={(v) => set('rarity', v as CustomCardInput['rarity'])} /></div>
+        <div className="field"><span>Finish</span>
+          <Dropdown value={card.finish} options={['nonfoil', 'foil', 'etched'].map((v) => ({ value: v, label: v }))}
+            onChange={(v) => set('finish', v as CustomCardInput['finish'])} /></div>
+        <div className="field"><span>Set type</span>
+          <Dropdown value={card.set_type} options={['expansion', 'core', 'masters', 'commander', 'draft_innovation', 'funny', 'promo'].map((v) => ({ value: v, label: v }))}
+            onChange={(v) => set('set_type', v)} /></div>
+        <div className="field"><span>Border</span>
+          <Dropdown value={card.border_color} options={['black', 'borderless', 'white', 'silver', 'gold'].map((v) => ({ value: v, label: v }))}
+            onChange={(v) => set('border_color', v)} /></div>
+        <div className="field"><span>Frame</span>
+          <Dropdown value={card.frame} options={['2015', '1997', '1993', 'future'].map((v) => ({ value: v, label: v }))}
+            onChange={(v) => set('frame', v)} /></div>
         <label className="field"><span>Release date</span>
           <input type="date" value={card.released_at ?? ''} onChange={(e) => set('released_at', e.target.value || undefined)} /></label>
         <fieldset className="field full"><legend>Frame effects</legend>
@@ -95,11 +91,9 @@ export function CustomCardForm({ index, onAdd, onCancel }: Props) {
             ))}
           </div>
         </fieldset>
-        <label className="field wide"><span>Expected demand</span>
-          <select value={card.demand} onChange={(e) => set('demand', e.target.value as Demand)}>
-            {DEMANDS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-          </select>
-          <small>Stands in for EDHREC rank, the strongest price signal. Ignored if "Reprint of" is set.</small></label>
+        <div className="field wide"><span>Expected demand</span>
+          <Dropdown value={card.demand} options={DEMANDS} onChange={(v) => set('demand', v as Demand)} />
+          <small>Stands in for EDHREC rank, the strongest price signal. Ignored if "Reprint of" is set.</small></div>
         <div className="field search"><span>Reprint of</span>
           <input placeholder="search a real card" value={reprintQuery}
             onChange={(e) => { setReprintQuery(e.target.value); set('reprint_of', undefined) }} />

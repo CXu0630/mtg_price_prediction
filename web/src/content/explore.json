@@ -1,0 +1,472 @@
+{
+ "totals": {
+  "rows": 149078,
+  "priced": 142012,
+  "cards": 32979,
+  "sets": 669,
+  "window": "Jun 22 – Sep 20, 2026",
+  "p10": 0.15,
+  "median": 0.48,
+  "p90": 12.66,
+  "max": 23701.92
+ },
+ "histogram": [
+  {
+   "lo": 0.01,
+   "hi": 0.0178,
+   "n": 7
+  },
+  {
+   "lo": 0.0178,
+   "hi": 0.0316,
+   "n": 223
+  },
+  {
+   "lo": 0.0316,
+   "hi": 0.0562,
+   "n": 1621
+  },
+  {
+   "lo": 0.0562,
+   "hi": 0.1,
+   "n": 4839
+  },
+  {
+   "lo": 0.1,
+   "hi": 0.1778,
+   "n": 13551
+  },
+  {
+   "lo": 0.1778,
+   "hi": 0.3162,
+   "n": 30023
+  },
+  {
+   "lo": 0.3162,
+   "hi": 0.5623,
+   "n": 25470
+  },
+  {
+   "lo": 0.5623,
+   "hi": 1.0,
+   "n": 11339
+  },
+  {
+   "lo": 1.0,
+   "hi": 1.7783,
+   "n": 9765
+  },
+  {
+   "lo": 1.7783,
+   "hi": 3.1623,
+   "n": 9868
+  },
+  {
+   "lo": 3.1623,
+   "hi": 5.6234,
+   "n": 10088
+  },
+  {
+   "lo": 5.6234,
+   "hi": 10.0,
+   "n": 8252
+  },
+  {
+   "lo": 10.0,
+   "hi": 17.7828,
+   "n": 6429
+  },
+  {
+   "lo": 17.7828,
+   "hi": 31.6228,
+   "n": 4534
+  },
+  {
+   "lo": 31.6228,
+   "hi": 56.2341,
+   "n": 2933
+  },
+  {
+   "lo": 56.2341,
+   "hi": 100.0,
+   "n": 1448
+  },
+  {
+   "lo": 100.0,
+   "hi": 177.8279,
+   "n": 689
+  },
+  {
+   "lo": 177.8279,
+   "hi": 316.2278,
+   "n": 422
+  },
+  {
+   "lo": 316.2278,
+   "hi": 562.3413,
+   "n": 282
+  },
+  {
+   "lo": 562.3413,
+   "hi": 1000.0,
+   "n": 121
+  },
+  {
+   "lo": 1000.0,
+   "hi": 1778.2794,
+   "n": 57
+  },
+  {
+   "lo": 1778.2794,
+   "hi": 3162.2777,
+   "n": 32
+  },
+  {
+   "lo": 3162.2777,
+   "hi": 5623.4133,
+   "n": 15
+  },
+  {
+   "lo": 5623.4133,
+   "hi": 10000.0,
+   "n": 1
+  },
+  {
+   "lo": 10000.0,
+   "hi": 17782.7941,
+   "n": 2
+  },
+  {
+   "lo": 17782.7941,
+   "hi": 31622.7766,
+   "n": 1
+  }
+ ],
+ "buckets": [
+  {
+   "label": "under $1",
+   "n": 87073,
+   "share": 61.3,
+   "value_share": 2.3
+  },
+  {
+   "label": "$1–10",
+   "n": 37973,
+   "share": 26.7,
+   "value_share": 11.3
+  },
+  {
+   "label": "$10–100",
+   "n": 15344,
+   "share": 10.8,
+   "value_share": 33.5
+  },
+  {
+   "label": "$100+",
+   "n": 1622,
+   "share": 1.1,
+   "value_share": 52.9
+  }
+ ],
+ "rarity": [
+  {
+   "label": "common",
+   "n": 41214,
+   "median": 0.24,
+   "mean": 1.33
+  },
+  {
+   "label": "uncommon",
+   "n": 34527,
+   "median": 0.32,
+   "mean": 3.14
+  },
+  {
+   "label": "rare",
+   "n": 52326,
+   "median": 1.5,
+   "mean": 12.95
+  },
+  {
+   "label": "mythic",
+   "n": 13347,
+   "median": 6.26,
+   "mean": 29.52
+  },
+  {
+   "label": "special",
+   "n": 598,
+   "median": 6.07,
+   "mean": 35.35
+  }
+ ],
+ "finish": [
+  {
+   "label": "nonfoil",
+   "n": 82082,
+   "median": 0.34,
+   "mean": 5.77
+  },
+  {
+   "label": "foil",
+   "n": 54479,
+   "median": 0.96,
+   "mean": 12.45
+  },
+  {
+   "label": "surgefoil",
+   "n": 2364,
+   "median": 3.33,
+   "mean": 12.74
+  },
+  {
+   "label": "etched",
+   "n": 1216,
+   "median": 2.91,
+   "mean": 10.23
+  },
+  {
+   "label": "galaxyfoil",
+   "n": 375,
+   "median": 1.29,
+   "mean": 18.6
+  },
+  {
+   "label": "silverfoil",
+   "n": 369,
+   "median": 2.01,
+   "mean": 13.74
+  },
+  {
+   "label": "ripplefoil",
+   "n": 344,
+   "median": 1.22,
+   "mean": 3.57
+  },
+  {
+   "label": "rainbowfoil",
+   "n": 189,
+   "median": 15.26,
+   "mean": 43.46
+  }
+ ],
+ "set_type": [
+  {
+   "label": "expansion",
+   "n": 56253,
+   "median": 0.36,
+   "mean": 6.42
+  },
+  {
+   "label": "commander",
+   "n": 18240,
+   "median": 0.54,
+   "mean": 4.86
+  },
+  {
+   "label": "masters",
+   "n": 15909,
+   "median": 0.38,
+   "mean": 6.44
+  },
+  {
+   "label": "core",
+   "n": 11820,
+   "median": 0.39,
+   "mean": 17.03
+  },
+  {
+   "label": "draft_innovation",
+   "n": 11804,
+   "median": 0.35,
+   "mean": 5.47
+  },
+  {
+   "label": "promo",
+   "n": 10213,
+   "median": 2.16,
+   "mean": 12.6
+  },
+  {
+   "label": "box",
+   "n": 5410,
+   "median": 7.4,
+   "mean": 17.18
+  },
+  {
+   "label": "masterpiece",
+   "n": 2785,
+   "median": 6.13,
+   "mean": 39.75
+  }
+ ],
+ "edhrec": [
+  {
+   "label": "top 20%",
+   "median": 3.69
+  },
+  {
+   "label": "20–40%",
+   "median": 1.62
+  },
+  {
+   "label": "40–60%",
+   "median": 0.44
+  },
+  {
+   "label": "60–80%",
+   "median": 0.29
+  },
+  {
+   "label": "bottom 20%",
+   "median": 0.22
+  }
+ ],
+ "reserved": {
+  "median_reserved": 14.8,
+  "median_other": 0.47
+ },
+ "trend": {
+  "n": 52019,
+  "up10": 24.1,
+  "down10": 14.9,
+  "median_move": 1.6
+ },
+ "expensive": [
+  {
+   "name": "Smaug the Magnificent",
+   "set": "hob",
+   "set_name": "The Hobbit",
+   "finish": "foil",
+   "price": 23701.92
+  },
+  {
+   "name": "Black Lotus",
+   "set": "leb",
+   "set_name": "Limited Edition Beta",
+   "finish": "nonfoil",
+   "price": 12000.0
+  },
+  {
+   "name": "Cavern of Souls",
+   "set": "ltc",
+   "set_name": "Tales of Middle-earth Commander",
+   "finish": "foil",
+   "price": 10000.0
+  },
+  {
+   "name": "Black Lotus",
+   "set": "2ed",
+   "set_name": "Unlimited Edition",
+   "finish": "nonfoil",
+   "price": 6906.25
+  },
+  {
+   "name": "Timetwister",
+   "set": "2ed",
+   "set_name": "Unlimited Edition",
+   "finish": "nonfoil",
+   "price": 5462.48
+  },
+  {
+   "name": "Ancestral Recall",
+   "set": "2ed",
+   "set_name": "Unlimited Edition",
+   "finish": "nonfoil",
+   "price": 4999.95
+  },
+  {
+   "name": "Cavern of Souls",
+   "set": "lci",
+   "set_name": "The Lost Caverns of Ixalan",
+   "finish": "foil",
+   "price": 4900.0
+  },
+  {
+   "name": "Tifa Lockhart",
+   "set": "pf25",
+   "set_name": "MagicFest 2025",
+   "finish": "foil",
+   "price": 4552.24
+  },
+  {
+   "name": "Time Walk",
+   "set": "2ed",
+   "set_name": "Unlimited Edition",
+   "finish": "nonfoil",
+   "price": 4538.87
+  },
+  {
+   "name": "Mox Emerald",
+   "set": "lea",
+   "set_name": "Limited Edition Alpha",
+   "finish": "nonfoil",
+   "price": 4453.0
+  }
+ ],
+ "importance": [
+  {
+   "label": "EDHREC rank",
+   "catboost": 154.7,
+   "gp": 75.6
+  },
+  {
+   "label": "rarity",
+   "catboost": 52.2,
+   "gp": 5.9
+  },
+  {
+   "label": "# paper printings",
+   "catboost": 41.9,
+   "gp": 8.3
+  },
+  {
+   "label": "pull rates",
+   "catboost": 39.5,
+   "gp": 35.9
+  },
+  {
+   "label": "legalities",
+   "catboost": 39.1,
+   "gp": 22.9
+  },
+  {
+   "label": "finish",
+   "catboost": 35.4,
+   "gp": 27.7
+  },
+  {
+   "label": "set type",
+   "catboost": 27.5,
+   "gp": 11.9
+  },
+  {
+   "label": "reserved / promo flags",
+   "catboost": 14.2,
+   "gp": 23.8
+  },
+  {
+   "label": "frame",
+   "catboost": 21.6,
+   "gp": 11.1
+  },
+  {
+   "label": "EDHREC salt",
+   "catboost": 12.0,
+   "gp": 8.1
+  },
+  {
+   "label": "border color",
+   "catboost": 10.2,
+   "gp": 3.7
+  },
+  {
+   "label": "text embedding",
+   "gp": 7.7
+  },
+  {
+   "label": "image embedding",
+   "gp": 6.3
+  }
+ ]
+}

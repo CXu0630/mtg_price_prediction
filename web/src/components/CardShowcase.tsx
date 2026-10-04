@@ -8,6 +8,28 @@ export interface Face { key: string; src?: string; custom?: CustomCardInput }
 
 export const TREASURE: Face = { key: 'treasure', src: scryfallImage('46a2c363-c879-4c36-b08a-dd57e3da19ae', 'normal') }
 
+/**
+ * What the page is doing decides what the showcase holds. Every change of state spins the card up and
+ * lands it on the new state's card:
+ *   cards   the list grid      cycles through the list (featured cards while it's empty)
+ *   prices  predictions shown  Treasure token (LTR)
+ *   search  adding a card      Vampiric Tutor (CMR)
+ *   custom  custom-card form   Fabricate (HOP)
+ *   card    one card's results the card itself
+ *   docs    Documentation      Library of Leng (ME4)
+ *   bots    Bot Trading        Stock Up (DFT)
+ *   data    Data Exploration   Exploration (DMR)
+ */
+export type ShowcaseState = 'cards' | 'prices' | 'search' | 'custom' | 'card' | 'docs' | 'bots' | 'data'
+export const STATE_CARD: Record<Exclude<ShowcaseState, 'cards' | 'card'>, Face> = {
+  prices: TREASURE,
+  search: { key: 'vampiric-tutor', src: scryfallImage('18bd50f2-c3ba-4217-a2d5-bb771e199706', 'normal') },
+  custom: { key: 'fabricate', src: scryfallImage('44e49332-b1e1-4b88-b508-516b55c67a1d', 'normal') },
+  docs: { key: 'library-of-leng', src: scryfallImage('c2fbf45f-9599-42e2-8510-7e20731e6c68', 'normal') },
+  bots: { key: 'stock-up', src: scryfallImage('0a786855-6eb4-42c0-a528-4842db46809d', 'normal') },
+  data: { key: 'exploration', src: scryfallImage('5b372045-a4a0-44c8-96ec-1e201d61ed26', 'normal') },
+}
+
 /** Shown while the list is empty: a few iconic printings. */
 export const FEATURED: Face[] = [
   'b0faa7f2-b547-42c4-a810-839da50dadfe', // Black Lotus
@@ -107,7 +129,7 @@ export function CardShowcase({ deck: deckIn, burst }: Props) {
   }, [])
 
   useEffect(() => { // warm the cache for every face so swaps never show a blank card
-    for (const f of [...deck, TREASURE]) if (f.src) new Image().src = f.src
+    for (const f of [...deck, ...Object.values(STATE_CARD)]) if (f.src) new Image().src = f.src
   }, [deck])
 
   return (

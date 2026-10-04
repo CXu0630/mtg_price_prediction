@@ -46,6 +46,21 @@ def _clean(v):
     return v
 
 
+def _treatment(row) -> str:
+    """Human-readable visual treatments for one printing's search entry."""
+    effects = row["frame_effects"]
+    tags = list(effects) if isinstance(effects, (list, tuple, np.ndarray)) else []
+    labels = {"extendedart": "extended art", "fullart": "full art", "colorshifted": "color shifted"}
+    tags = [labels.get(tag, tag) for tag in tags]
+    if row["borderless"]:
+        tags.insert(0, "borderless")
+    elif row["border_color"] not in (None, "black"):
+        tags.insert(0, f'{row["border_color"]} border')
+    if row["full_art"]:
+        tags.append("full art")
+    return ", ".join(dict.fromkeys(tags))
+
+
 def main() -> int:
     dataset = pd.read_parquet(DATASET)
     models = AppModels.load(MODELS, GP_DIR)
@@ -82,6 +97,8 @@ def main() -> int:
     # Column-wise search index; set names live once in `sets`, rarity is its first letter.
     index = {c: scored[c].tolist() for c in ("printing_key", "name", "set", "collector_number", "finish")}
     index["rarity"] = scored["rarity"].str[0].tolist()
+    treatment_source = dataset.set_index("printing_key").reindex(scored["printing_key"])
+    index["treatment"] = [_treatment(row) for _, row in treatment_source.iterrows()]
     index["sets"] = scored.drop_duplicates("set").set_index("set")["set_name"].to_dict()
     (OUT / "index.json").write_text(json.dumps(index, separators=(",", ":")))
     meta = {**models.manifest, "n_printings": len(scored), "n_scored": int((scored["status"] == "scored").sum()),

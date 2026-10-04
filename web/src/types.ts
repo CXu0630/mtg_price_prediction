@@ -76,6 +76,8 @@ export interface SearchIndex {
   set: string[]
   collector_number: string[]
   finish: string[]
+  /** optional visual treatment tags (borderless, showcase, extended art, etc.) */
+  treatment?: string[]
   /** first letter of the rarity (c / u / r / m / s / b) */
   rarity: string[]
   /** set code -> set name */

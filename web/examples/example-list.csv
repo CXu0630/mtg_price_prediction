@@ -1,0 +1,9 @@
+name,set,collector_number,finish,quantity,custom
+Sol Ring,c21,263,nonfoil,4,
+Lightning Bolt,2x2,361,foil,1,
+"Ragavan, Nimble Pilferer",mh2,138,nonfoil,1,
+The One Ring,ltr,697,silverfoil,1,
+Counterspell,mh2,267,etched,2,
+Black Lotus,,,,1,
+Gilded Wurm,,,foil,2,"{""name"": ""Gilded Wurm"", ""rarity"": ""mythic"", ""type_line"": ""Creature — Wurm"", ""mana_cost"": ""{4}{G}{G}"", ""oracle_text"": ""Trample\nWhen Gilded Wurm enters, create a Treasure token."", ""power"": ""7"", ""toughness"": ""7"", ""finish"": ""foil"", ""set_type"": ""expansion"", ""frame"": ""2015"", ""border_color"": ""borderless"", ""frame_effects"": [""showcase""], ""demand"": ""popular""}"
+Archivist of Ash,,,nonfoil,3,"{""name"": ""Archivist of Ash"", ""rarity"": ""rare"", ""type_line"": ""Legendary Creature — Human Wizard"", ""mana_cost"": ""{1}{U}{R}"", ""oracle_text"": ""Whenever you cast an instant or sorcery spell, scry 1."", ""power"": ""2"", ""toughness"": ""3"", ""finish"": ""nonfoil"", ""set_type"": ""commander"", ""frame"": ""2015"", ""border_color"": ""black"", ""frame_effects"": [""legendary""], ""demand"": ""playable"", ""released_at"": ""2026-11-14""}"

@@ -45,8 +45,8 @@ export function priceCustom(cards: CustomCard[], m: WebModels): PredictionRow[] 
       price_hi: a.fair * Math.exp(b.move_hi),
       signal: b.move_lo > 0 ? 'BUY' : b.move_hi < 0 ? 'SELL' : 'HOLD',
       buylist_pred: null, buylist_lo: null, buylist_hi: null,
-      caveats: ['Custom card: one day of price data (the Model A estimate), so the 14-day forecast has no momentum or cross-market signal.',
-        'Model C n/a: no Card Kingdom buylist. Deep GP n/a for custom cards (it needs text/art embedding models).'],
+      caveats: ['Custom card: one day of price data (the boosted-tree fair value), so the 14-day forecast has no momentum or cross-market signal.',
+        'No buylist forecast: a custom card has no Card Kingdom buylist. Deep GP n/a for custom cards (it needs text/art embedding models).'],
     }
   })
 }

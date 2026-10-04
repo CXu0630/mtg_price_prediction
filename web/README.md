@@ -1,4 +1,4 @@
-# web/ — MTG Price Range frontend
+# web/ — MTG Price Intelligence frontend
 
 React + Vite + TypeScript, fully static. Existing printings come from `public/data/`
 (written nightly by `scripts/app/score_all.py`); custom cards are priced in the browser

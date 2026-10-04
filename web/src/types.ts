@@ -66,7 +66,7 @@ export interface CustomCardInput {
 }
 
 export type ListItem =
-  | { id: string; kind: 'existing'; printing_key: string; set: string; quantity: number }
+  | { id: string; kind: 'existing'; printing_key: string; set: string; quantity: number; name?: string }
   | { id: string; kind: 'custom'; card: CustomCardInput; quantity: number }
 
 /** Column-wise search index (web/public/data/index.json). */

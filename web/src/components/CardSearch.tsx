@@ -16,7 +16,7 @@ export function CardSearch({ index, onAdd }: Props) {
     <div className="search">
       <label className="field">
         <span>Add an existing card</span>
-        <input
+        <input id="card-search"
           type="search"
           placeholder={index ? 'Card name, e.g. "Sol Ring" or "bolt set:2x2"' : 'Loading card index…'}
           value={query}

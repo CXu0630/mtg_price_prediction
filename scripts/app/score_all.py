@@ -73,8 +73,8 @@ def main() -> int:
 
     scored["comps"] = scored["comps"].map(comps_summary)
 
-    if OUT.exists():
-        shutil.rmtree(OUT)
+    # Clear only what this script writes (models/ is export_web_models.py's).
+    shutil.rmtree(OUT / "sets", ignore_errors=True)
     (OUT / "sets").mkdir(parents=True)
     for set_code, g in scored.groupby("set"):
         records = [{f: _clean(r[f]) for f in FIELDS if f in r} for r in g.to_dict("records")]

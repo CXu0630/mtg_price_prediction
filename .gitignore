@@ -58,3 +58,6 @@ mtggoldfish/
 data/
 models/app/
 web/public/data/
+
+# regenerated nightly by scripts/app/export_web_models.py --fixture
+web/src/model/parity.fixture.json

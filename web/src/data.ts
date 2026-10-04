@@ -1,8 +1,6 @@
-import type { Backend, CustomCardInput, Meta, PredictionRow, SearchIndex } from './types'
+import type { Meta, PredictionRow, SearchIndex } from './types'
 
 const DATA = `${import.meta.env.BASE_URL}data`
-/** Custom-card API (FastAPI, api/app.py). Set VITE_API_URL at build time. */
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8000'
 
 async function getJSON<T>(url: string): Promise<T> {
   const r = await fetch(url)
@@ -65,19 +63,6 @@ export function search(index: SearchIndex, query: string, limit = 30): SearchHit
     finish: index.finish[i],
     rarity: RARITY[index.rarity[i]] ?? index.rarity[i],
   }))
-}
-
-export async function predictCustom(cards: (CustomCardInput & { quantity: number })[], backend: Backend) {
-  const r = await fetch(`${API_URL}/predict`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ backend, cards }),
-  })
-  if (!r.ok) {
-    const detail = await r.json().catch(() => ({}))
-    throw new Error(typeof detail.detail === 'string' ? detail.detail : `API error ${r.status}`)
-  }
-  return (await r.json()) as { price_date: string; rows: PredictionRow[] }
 }
 
 export function scryfallImage(scryfallId: string | undefined, size: 'small' | 'normal' = 'small'): string | undefined {

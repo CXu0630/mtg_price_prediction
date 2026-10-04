@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import type { Backend, CustomCardInput, Demand } from '../types'
+import { useMemo, useState } from 'react'
+import { search } from '../data'
+import type { CustomCardInput, Demand, SearchIndex } from '../types'
 
 const DEMANDS: { value: Demand; label: string }[] = [
   { value: 'staple', label: 'Staple (top ~2% of Commander play)' },
@@ -16,24 +17,24 @@ const EMPTY: CustomCardInput = {
 }
 
 interface Props {
-  backend: Backend
+  index: SearchIndex | null
   onAdd: (card: CustomCardInput, quantity: number) => void
   onCancel: () => void
 }
 
 /** Everything printed on a card or declared at design time (docs/APP_DESIGN.md §2). */
-export function CustomCardForm({ backend, onAdd, onCancel }: Props) {
+export function CustomCardForm({ index, onAdd, onCancel }: Props) {
   const [card, setCard] = useState<CustomCardInput>(EMPTY)
   const [quantity, setQuantity] = useState(1)
   const set = <K extends keyof CustomCardInput>(k: K, v: CustomCardInput[K]) => setCard((c) => ({ ...c, [k]: v }))
   const valid = card.name.trim() && card.type_line.trim()
 
-  const readArt = (file: File | undefined) => {
-    if (!file) return set('art', undefined)
-    const reader = new FileReader()
-    reader.onload = () => set('art', reader.result as string)
-    reader.readAsDataURL(file)
-  }
+  // "Reprint of" must be an exact card name: suggest distinct names from the search index.
+  const [reprintQuery, setReprintQuery] = useState('')
+  const reprintHits = useMemo(() => {
+    if (!index || reprintQuery === card.reprint_of) return []
+    return [...new Set(search(index, reprintQuery, 40).map((h) => h.name))].slice(0, 8)
+  }, [index, reprintQuery, card.reprint_of])
 
   return (
     <form
@@ -99,14 +100,20 @@ export function CustomCardForm({ backend, onAdd, onCancel }: Props) {
             {DEMANDS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
           <small>Stands in for EDHREC rank, the strongest price signal. Ignored if "Reprint of" is set.</small></label>
-        <label className="field"><span>Reprint of</span>
-          <input placeholder="exact card name" value={card.reprint_of ?? ''} onChange={(e) => set('reprint_of', e.target.value || undefined)} /></label>
+        <div className="field search"><span>Reprint of</span>
+          <input placeholder="search a real card" value={reprintQuery}
+            onChange={(e) => { setReprintQuery(e.target.value); set('reprint_of', undefined) }} />
+          {reprintHits.length > 0 && (
+            <ul className="hits">
+              {reprintHits.map((name) => (
+                <li key={name}><button type="button" onClick={() => { set('reprint_of', name); setReprintQuery(name) }}>{name}</button></li>
+              ))}
+            </ul>
+          )}
+          {card.reprint_of && <small>Uses {card.reprint_of}'s demand, tags, legality and printing history.</small>}
+        </div>
         <label className="field"><span>In set (code)</span>
           <input placeholder="optional, e.g. fdn" value={card.set ?? ''} onChange={(e) => set('set', e.target.value || undefined)} /></label>
-        {backend === 'gp' && (
-          <label className="field wide"><span>Art (deep GP only)</span>
-            <input type="file" accept="image/*" onChange={(e) => readArt(e.target.files?.[0])} /></label>
-        )}
         <label className="field"><span>Quantity</span>
           <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} /></label>
       </div>

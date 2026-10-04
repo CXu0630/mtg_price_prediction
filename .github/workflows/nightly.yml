@@ -44,14 +44,15 @@ jobs:
       - name: Score every printing -> web/public/data
         run: python scripts/app/score_all.py
 
-      - name: Publish app assets + restart the API Space
+      - name: Export Models A and B for in-browser custom-card pricing (+ parity fixture)
+        run: python scripts/app/export_web_models.py --fixture
+
+      - name: Publish app assets to Hugging Face (optional, for the record)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          API_SPACE: ${{ vars.API_SPACE }}
         run: |
           if [ -z "$HF_TOKEN" ]; then echo "no HF_TOKEN secret: skipping"; exit 0; fi
           python scripts/app/assets.py publish
-          if [ -n "$API_SPACE" ]; then python -c "from huggingface_hub import HfApi; HfApi().restart_space('$API_SPACE')"; fi
 
       - uses: actions/setup-node@v4
         with:
@@ -59,13 +60,13 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Build site
+      - name: Parity test (browser port must match Python) + build site
         working-directory: web
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
-          VITE_API_URL: ${{ vars.API_URL }}
         run: |
           npm ci
+          npm test
           npm run build
 
       - uses: actions/upload-pages-artifact@v3

@@ -63,7 +63,6 @@ export interface CustomCardInput {
   demand: Demand
   reprint_of?: string
   set?: string
-  art?: string
 }
 
 export type ListItem =

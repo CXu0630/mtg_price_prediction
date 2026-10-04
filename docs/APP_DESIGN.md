@@ -145,6 +145,25 @@ Model A predicts for it.**
 4. GP backend toggle (+ comps), embeddings in the API.
 5. Polish: totals, CSV import/export, per-card detail view with price chart.
 
+## 7b. Change: custom cards are priced in the browser
+
+Hosting the API turned out to need a paid tier (Hugging Face Docker Spaces require
+PRO) or a cloud account, so **custom cards are now priced client-side** and the whole
+app is static on GitHub Pages:
+
+- `scripts/app/export_web_models.py` exports Models A and B to JSON nightly (trees,
+  conformal factors, feature vocab, live sibling/set-move lookups, "reprint of" lookups).
+- `web/src/model/` evaluates them: `hgb.ts` is a port of scikit-learn's tree prediction
+  (including its internal categorical preprocessor), `custom.ts` ports the custom-card
+  feature building (`cards.custom_rows`, `fair_value.static_features`,
+  `market.custom_day0_rows`).
+- `npm test` checks the port against Python on 48 varied fixture cards: Model A's
+  feature vectors exactly, prices and forecasts to 1e-6. It runs in the nightly
+  workflow before the site builds.
+- The deep GP is not available for custom cards (it needs the text/art embedding
+  models); existing printings keep their precomputed GP values. `api/` still works and
+  can be deployed later (HF PRO or Cloud Run) to add the GP for custom cards.
+
 ## 8. What's built (v1)
 
 | piece | where | notes |
@@ -156,9 +175,10 @@ Model A predicts for it.**
 | deep-GP backend | `gp_features.py`, `embed.py`, `scripts/app/build_gp_static.py` | features + text embeddings parity-checked exactly against training |
 | training | `scripts/app/train_models.py` | A + B + C in ~8 min -> `models/app/` |
 | nightly scoring | `scripts/app/score_all.py` | every printing -> `web/public/data/` (index + per-set JSON) |
-| API | `api/app.py`, `api/Dockerfile` | FastAPI, custom cards only; HF Docker Space via `scripts/app/deploy_space.py` |
+| custom cards in the browser | `scripts/app/export_web_models.py`, `web/src/model/` | Models A + B as JSON, TypeScript port, parity-tested against Python (§7b) |
+| API (optional, not deployed) | `api/app.py`, `api/Dockerfile` | FastAPI; adds the deep GP for custom cards when hosted |
 | frontend | `web/` | React + Vite + TS; list editor, custom-card form, results table, CSV |
-| automation | `.github/workflows/nightly.yml` | refresh -> retrain -> score -> publish assets -> build -> GitHub Pages |
+| automation | `.github/workflows/nightly.yml` | refresh -> retrain -> score -> export web models -> parity test -> build -> GitHub Pages |
 
 Known limits: the card universe is the dataset build (newer printings come back as
 "not in dataset" -- enter them as custom cards); multi-face cards are out of scope;

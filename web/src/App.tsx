@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CardSearch } from './components/CardSearch'
 import { CustomCardForm } from './components/CustomCardForm'
 import { ResultsTable, type ResultLine } from './components/ResultsTable'
-import { API_URL, loadIndex, loadMeta, loadSet, predictCustom, usd } from './data'
+import { loadIndex, loadMeta, loadSet, usd } from './data'
+import { loadModels, priceCustom } from './model'
 import type { Backend, CustomCardInput, ListItem, Meta, PredictionRow, SearchIndex } from './types'
 
 const STORAGE_KEY = 'mtg-price-list-v1'
@@ -18,9 +19,7 @@ function loadList(): ListItem[] {
 
 function saveList(items: ListItem[]) {
   try {
-    // Art uploads are large; keep them out of storage.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.map((i) =>
-      i.kind === 'custom' ? { ...i, card: { ...i.card, art: undefined } } : i)))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   } catch {
     /* storage unavailable: the list just won't persist */
   }
@@ -75,24 +74,25 @@ export default function App() {
     }).catch((e: Error) => setLoadError(e.message))
   }, [items, existingRows])
 
-  // Custom cards: priced by the API, per backend (the Model A choice changes the day-0 price).
-  const priceCustom = useCallback(async () => {
+  // Custom cards: priced in the browser by Models A and B (exported nightly; src/model/).
+  const priceCustomCards = useCallback(async () => {
     const custom = items.filter((i): i is Extract<ListItem, { kind: 'custom' }> => i.kind === 'custom')
     if (custom.length === 0) return
     setPricing(true)
     try {
-      const res = await predictCustom(custom.map((c) => ({ ...c.card, quantity: c.quantity })), backend)
-      setCustomRows(Object.fromEntries(custom.map((c, k) => [c.id, res.rows[k]])))
+      const models = await loadModels(custom.some((c) => c.card.reprint_of))
+      const rows = priceCustom(custom.map((c) => c.card), models)
+      setCustomRows(Object.fromEntries(custom.map((c, k) => [c.id, rows[k]])))
     } catch (e) {
       const msg = (e as Error).message
       setCustomRows(Object.fromEntries(custom.map((c) => [c.id, { error: msg }])))
     } finally {
       setPricing(false)
     }
-  }, [items, backend])
+  }, [items])
 
-  const customKey = JSON.stringify(items.filter((i) => i.kind === 'custom').map((i) => i.id)) + backend
-  useEffect(() => { void priceCustom() }, [customKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const customKey = JSON.stringify(items.filter((i) => i.kind === 'custom').map((i) => i.id))
+  useEffect(() => { void priceCustomCards() }, [customKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const lines: ResultLine[] = useMemo(() => items.map((i) => {
     if (i.kind === 'existing') return { id: i.id, quantity: i.quantity, row: existingRows[i.printing_key] ?? null, pending: true }
@@ -122,7 +122,7 @@ export default function App() {
         <fieldset className="toggle">
           <legend>Fair-value model</legend>
           <label><input type="radio" name="backend" checked={backend === 'a'} onChange={() => setBackend('a')} /> Model A</label>
-          <label><input type="radio" name="backend" checked={backend === 'gp'} onChange={() => setBackend('gp')} /> Deep GP (text + art)</label>
+          <label><input type="radio" name="backend" checked={backend === 'gp'} onChange={() => setBackend('gp')} /> Deep GP (text + art; existing cards)</label>
         </fieldset>
       </header>
 
@@ -136,7 +136,7 @@ export default function App() {
 
       {showForm && (
         <div className="modal" role="dialog" aria-modal="true" aria-label="Custom card">
-          <CustomCardForm backend={backend} onCancel={() => setShowForm(false)}
+          <CustomCardForm index={index} onCancel={() => setShowForm(false)}
             onAdd={(card: CustomCardInput, quantity: number) => {
               setItems((it) => [...it, { id: newId(), kind: 'custom', card, quantity }])
               setShowForm(false)
@@ -148,7 +148,7 @@ export default function App() {
         <div className="list-header">
           <h2>Your list</h2>
           <div className="actions">
-            {pricing && <span className="muted">Pricing custom cards… (the API may take a minute to wake up)</span>}
+            {pricing && <span className="muted">Pricing custom cards…</span>}
             <button type="button" className="secondary" disabled={items.length === 0} onClick={download}>Download CSV</button>
             <button type="button" className="secondary" disabled={items.length === 0} onClick={() => setItems([])}>Clear</button>
           </div>
@@ -164,7 +164,7 @@ export default function App() {
           prices inside its 80% range. Models B/C trained through {meta.model_b.cutoff}. {meta.n_scored.toLocaleString()} printings
           tradeable today ({usd(0.5)}+).{' '}
         </>}
-        Custom-card API: {API_URL}. Ranges are 80% intervals. Not financial advice. Magic: The Gathering is a trademark of
+        Custom cards are priced in your browser by Models A and B (the deep GP covers existing printings only). Ranges are 80% intervals. Not financial advice. Magic: The Gathering is a trademark of
         Wizards of the Coast; card images © Wizards of the Coast, via Scryfall. Unofficial fan project.
       </footer>
     </div>

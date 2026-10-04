@@ -51,13 +51,14 @@ python scripts/app/refresh_prices.py      # today's prices from MTGJSON
 python scripts/app/train_models.py        # Models A, B, C (~8 min)
 python scripts/app/build_gp_static.py     # deep-GP values + comps (needs embeddings/, once)
 python scripts/app/score_all.py           # -> web/public/data
-uvicorn api.app:app --port 8000           # custom-card API
-cd web && npm install && npm run dev      # frontend at http://localhost:5173
+python scripts/app/export_web_models.py --fixture   # Models A + B for in-browser custom cards
+cd web && npm install && npm test && npm run dev    # parity test, then http://localhost:5173
 ```
 
-In production the nightly GitHub Action (`.github/workflows/nightly.yml`) runs the
-first four steps and deploys the site to GitHub Pages; the API runs as a Hugging
-Face Docker Space (`scripts/app/deploy_space.py`).
+Custom cards are priced in the browser by Models A and B, so the whole app is a
+static site. The nightly GitHub Action (`.github/workflows/nightly.yml`) runs these
+steps and deploys to GitHub Pages. `api/` is an optional server that would add the
+deep GP for custom cards (not deployed).
 
 ## Using the published models
 

@@ -1,0 +1,27 @@
+{
+  "price_date": "2026-10-03",
+  "model_a": {
+    "as_of": "2026-10-03",
+    "train_rows": 137473,
+    "oof_log_mae": 0.4403,
+    "oof_coverage80": 0.8,
+    "q": 1.5852,
+    "n_features": 644
+  },
+  "model_b": {
+    "cutoff": "2026-09-19",
+    "cqr_margin": -0.0003
+  },
+  "model_c": {
+    "cutoff": "2026-09-19",
+    "cqr_margin": 0.0089
+  },
+  "n_printings": 149078,
+  "n_scored": 67612,
+  "n_sets": 669,
+  "status_counts": {
+    "valued only": 69861,
+    "scored": 67612,
+    "unpriced": 11605
+  }
+}

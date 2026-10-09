@@ -8,7 +8,7 @@ a hypothetical/unreleased card: rarity and finish are both things a card's
 designer declares directly (or are visible on a real card), so this lookup
 turns "we don't have this card's real pull rate" into "use the typical rate
 for cards like it," rather than requiring the card to already exist in a
-real product (SPECS.md 4.2 inference input contract).
+real product.
 
 Two-level fallback per subtype, since many (rarity, finish) combinations are
 sparse or structurally impossible (e.g. secret_lair_rate_percent barely

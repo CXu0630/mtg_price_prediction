@@ -1,6 +1,5 @@
 # Nightly pipeline (scripts/app/*: refresh prices, train A/B/C, score). No torch needed --
 # the deep GP's outputs for existing printings come precomputed (gp_static.parquet).
-# Pinned: models trained here are unpickled by the API, so versions must match requirements/api.txt.
 numpy==2.5.3
 pandas==3.0.6
 pyarrow==25.0.1

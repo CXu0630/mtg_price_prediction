@@ -1,5 +1,5 @@
 """Exports Models A and B (and what their custom-card features read) to JSON, so the
-frontend prices custom cards in the browser -- no server (docs/APP_DESIGN.md).
+frontend prices custom cards in the browser -- no server.
 
   web/public/data/models/model_a.json      point + sigma HGB trees, conformal q, feature vocab
   web/public/data/models/model_b.json      10/50/90% quantile HGB trees, CQR margin, category
@@ -157,7 +157,7 @@ def write_fixture(dataset, as_of) -> None:
     from mtg_price_prediction.fair_value import static_features, with_history
     from mtg_price_prediction.scoring import AppModels, score_custom
 
-    models = AppModels.load(MODELS, ROOT / "models" / "deep_gp")
+    models = AppModels.load(MODELS)
     live = pd.read_parquet(LIVE)
     rng = np.random.default_rng(0)
     real_names = dataset.drop_duplicates("oracle_id").sample(12, random_state=1)["name"].tolist()
@@ -186,7 +186,7 @@ def write_fixture(dataset, as_of) -> None:
             reprint_of=real_names[i // 4] if i % 4 == 3 else None,
             set=sets[i % 6] if i % 5 == 2 else None,
             quantity=1))
-    out = score_custom(cards, dataset, models, live, as_of, "a")
+    out = score_custom(cards, dataset, models, live, as_of)
     rows = cards_mod.custom_rows(cards, dataset, as_of)
     hist = with_history(rows, dataset[["oracle_id", "released_at"]], as_of)
     xa = static_features(hist, models.a.vocab).reindex(columns=models.a.columns, fill_value=0.0)

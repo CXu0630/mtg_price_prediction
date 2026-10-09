@@ -1,12 +1,9 @@
 """Builds mtg-card-market-dataset/dataset.parquet, the working joined training dataset.
 
-Grain is one row per (printing, finish) -- see mtg-card-market-dataset/README.md for why.
-Currently just the per-card dataset (mtg-card-prices/raw/cards.parquet),
-deduped, exploded by finish, with a few columns dropped: platform IDs we
-don't need (SPECS.md doesn't use them for anything -- not join keys, not
-features) and price, held back for now until the target definition
-(SPECS.md §3, relative/log-price vs. a contemporaneous baseline) is settled.
-Re-run as more sources (rarity/pull-rate, EDHREC) get joined in.
+Grain is one row per (printing, finish), since price differs by both.
+The per-card dataset (mtg-card-prices/raw/cards.parquet), deduped, exploded by
+finish, with platform IDs that are neither join keys nor features dropped.
+Pull rates (join_pull_rates.py) and prices (join_price.py) are joined on after.
 """
 from __future__ import annotations
 
@@ -30,8 +27,7 @@ DROP_ID_COLS = [
     "mtgo_foil_id", "cardKingdomId", "mcmId", "tcgplayerProductId",
 ]
 
-# Held back until the target definition (SPECS.md §3) is settled -- not
-# dropped for good, just not part of the feature set yet.
+# Scryfall's own point prices: the target comes from join_price.py instead.
 DROP_PRICE_COLS = ["prices.usd", "prices.usd_foil", "prices.usd_etched", "prices.eur", "prices.eur_foil", "prices.tix"]
 
 # Dropped for good, once we're paper-only (see _drop_digital below):
@@ -72,7 +68,7 @@ NONCARD_LAYOUTS = {
 # Real, purchasable multi-face cards -- but the top-level mana_cost/
 # oracle_text/type_line/etc. columns are ~100% null for them (that data
 # only lives in the unflattened card_faces struct, which has no flattening
-# plan yet -- see COLUMNS.md group 5), and they're a source of uuid-match
+# plan yet), and they're a source of uuid-match
 # gaps in join_pull_rates.py too. Confirmed via name/oracle_text nullness:
 # these 7 layouts are 100% "X // Y" names with 100% null oracle_text; no
 # other layout shows that pattern (e.g. meld's front-half cards are

@@ -1,8 +1,8 @@
 """Custom (hypothetical) cards -> dataset-shaped rows, so every model reads custom and
-existing printings through the same feature builders (docs/APP_DESIGN.md §2, §4).
+existing printings through the same feature builders.
 
 Only what's printed on the card or declared at design time is required. The rest:
-  - EDHREC rank      <- `demand` tier (EDHREC is the #1 driver of every model; see SPECS)
+  - EDHREC rank      <- `demand` tier (EDHREC is the #1 driver of every model)
   - pull rates       <- (rarity, finish) defaults, play + collector boosters only for
                         expansion/core/masters sets (claiming every product fakes supply)
   - legalities       <- the real card's when `reprint_of` is given, else eternal formats,

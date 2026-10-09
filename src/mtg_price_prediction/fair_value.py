@@ -1,6 +1,6 @@
 """Model A -- a printing's cross-sectional fair value from its attributes (no price
 history). A reimplementation of the teammate's mtgpricepredictor/fair_value.py
-on our data, so the app retrains it itself (docs/APP_DESIGN.md):
+on our data, so the app retrains it itself:
 
   log(price) ~ HistGradientBoostingRegressor(static_features)
   sigma      ~ HGB on |out-of-fold residual|        (GroupKFold(3) by oracle_id)

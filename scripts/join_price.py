@@ -2,7 +2,7 @@
 mtg-card-prices/raw/price_history.parquet.
 
 Provider is hardcoded to tcgplayer -- checked all 4 paper providers first
-(see session notes / mtg-card-market-dataset/README.md): manapool's series has real,
+first: manapool's series has real,
 sane values mixed with multi-million-dollar spikes for ordinary cards
 (confirmed on Mind Stone: $2.86-$6.41 on cardkingdom/cardmarket/tcgplayer,
 $2.86-$3,537,205.22 on manapool for the identical card) -- a genuine
@@ -21,10 +21,8 @@ join against even though the treatment itself is more specific.
 
 Output is price_min/price_max/price_avg per (uuid, finish) over
 price_history's ~3-month window (2026-06-22 to 2026-09-20 as of this
-pull) -- matching the shape SPECS.md already expected from the teammate's
-per-card dataset, not a single point price (see SPECS.md §3 on why: a
-point price goes stale, a min/max/avg range is closer to what "predict a
-price range" needs anyway).
+pull) -- not a single point price: a point price goes stale, and a
+min/max/avg range is closer to what "predict a price range" needs.
 
 Also adds a compact 3-point trend curve (price_early/price_mid/price_late)
 -- the window split into 3 equal *calendar* periods (not per-card relative

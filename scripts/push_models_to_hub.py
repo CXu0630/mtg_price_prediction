@@ -1,9 +1,7 @@
-"""Uploads the exported models (scripts/export_models.py -> models/) to
-Hugging Face as public model repos. Needs `hf auth login` with write access
-to the target namespace.
+"""Uploads the exported deep GP (scripts/export_models.py -> models/deep_gp/) to Hugging Face
+as the public model repo CXu0630/mtg-price-deep-gp. Needs `hf auth login` with write access.
 
-    python scripts/push_models_to_hub.py            # both
-    python scripts/push_models_to_hub.py deep_gp    # one
+    python scripts/push_models_to_hub.py
 """
 from __future__ import annotations
 
@@ -14,7 +12,6 @@ from huggingface_hub import HfApi
 
 ROOT = Path(__file__).resolve().parent.parent
 REPOS = {
-    "catboost": "CXu0630/mtg-price-catboost",
     "deep_gp": "CXu0630/mtg-price-deep-gp",
 }
 

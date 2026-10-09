@@ -3,7 +3,7 @@
   Model A  fair value on the newest day's TCGplayer prices (OOF-calibrated 80% ranges)
   Model B  14-day TCGplayer move, every snapshot day with a known outcome
   Model C  14-day CK buylist move, rows with a trusted CK buylist
-  (the deep GP backend is the published CXu0630/mtg-price-deep-gp; not retrained here)
+  (the deep GP is the published CXu0630/mtg-price-deep-gp; not retrained here)
 
 Writes models/app/{model_a,model_b,model_c}.joblib, data/app/live_rows.parquet (the
 newest day's market rows, for scoring and custom-card peers) and models/app/manifest.json.

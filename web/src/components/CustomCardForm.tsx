@@ -23,7 +23,7 @@ interface Props {
   onCancel: () => void
 }
 
-/** Everything printed on a card or declared at design time (docs/APP_DESIGN.md §2). */
+/** Everything printed on a card or declared at design time. */
 export function CustomCardForm({ index, onAdd, onCancel }: Props) {
   const [card, setCard] = useState<CustomCardInput>(EMPTY)
   const [quantity, setQuantity] = useState(1)

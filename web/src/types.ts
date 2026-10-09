@@ -10,7 +10,7 @@ export interface Comp {
   price_today: number | null
 }
 
-/** One prediction row -- the shared schema of the static data and the API (docs/APP_DESIGN.md §3). */
+/** One prediction row: the schema of the static data in public/data/. */
 export interface PredictionRow {
   printing_key: string
   scryfall_id?: string

@@ -17,8 +17,8 @@ Artifacts the [MTG price-range app](https://github.com/CXu0630/mtg_price_predict
 loads at runtime, refreshed by its nightly pipeline (`scripts/app/`). Not meant
 as a standalone dataset — see
 [`CXu0630/mtg-card-market-dataset`](https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset)
-for the data and [`CXu0630/mtg-price-deep-gp`](https://huggingface.co/CXu0630/mtg-price-deep-gp)
-/ [`CXu0630/mtg-price-catboost`](https://huggingface.co/CXu0630/mtg-price-catboost) for the published models.
+for the data and [`CXu0630/mtg-price-deep-gp`](https://huggingface.co/CXu0630/mtg-price-deep-gp) for the
+published deep GP.
 
 | file | what |
 |---|---|

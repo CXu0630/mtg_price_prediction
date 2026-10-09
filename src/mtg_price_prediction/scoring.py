@@ -1,9 +1,9 @@
 """One output row per card -- existing printings (nightly, all at once) and custom
-cards (on demand, from the API) -- in the schema of docs/APP_DESIGN.md §3.
+cards (the parity fixture for the browser port) -- in the schema of web/src/types.ts.
 
   market     price_today (TCGplayer), ck_retail, ck_buylist (trusted only), cardmarket_eur
   Model A    fair / fair_lo / fair_hi           (teammate's method, retrained here)
-             fair_gp / fair_gp_lo / fair_gp_hi  (deep GP backend) + comps
+             fair_gp / fair_gp_lo / fair_gp_hi  (deep GP, precomputed in gp_static.parquet) + comps
   Model B    pred_price / price_lo / price_hi (14 days), signal BUY / SELL / HOLD
   Model C    buylist_pred / buylist_lo / buylist_hi (14 days)
 """
@@ -30,22 +30,11 @@ class AppModels:
     b: market.MoveModel
     c: market.MoveModel
     manifest: dict
-    gp_dir: Path
 
     @classmethod
-    def load(cls, models_dir: Path, gp_dir: Path) -> "AppModels":
+    def load(cls, models_dir: Path) -> "AppModels":
         return cls(joblib.load(models_dir / "model_a.joblib"), joblib.load(models_dir / "model_b.joblib"),
-                   joblib.load(models_dir / "model_c.joblib"), json.loads((models_dir / "manifest.json").read_text()),
-                   gp_dir)
-
-    _gp = None
-
-    @property
-    def gp(self):
-        if self._gp is None:
-            from mtg_price_prediction.deep_gp import DeepGPPredictor
-            self._gp = DeepGPPredictor.from_pretrained(str(self.gp_dir))
-        return self._gp
+                   joblib.load(models_dir / "model_c.joblib"), json.loads((models_dir / "manifest.json").read_text()))
 
 
 def _move_outputs(model: market.MoveModel, rows: pd.DataFrame, base: pd.Series, prefix: str) -> pd.DataFrame:
@@ -100,27 +89,15 @@ def score_existing(dataset: pd.DataFrame, models: AppModels, live: pd.DataFrame,
 
 
 def score_custom(cards: list[CustomCard], dataset: pd.DataFrame, models: AppModels, live: pd.DataFrame,
-                 as_of: pd.Timestamp, backend: str = "a", images: list | None = None) -> pd.DataFrame:
-    """Custom cards: Model A (chosen backend) gives the one day of price data, B forecasts from it,
-    C is not applicable (no buylist exists)."""
+                 as_of: pd.Timestamp) -> pd.DataFrame:
+    """Custom cards: Model A gives the one day of price data, B forecasts from it, C is not applicable
+    (no buylist exists). The browser port (web/src/model/) reproduces this; the GP has no custom-card path."""
     rows = custom_rows(cards, dataset, as_of)
     hist = with_history(rows, dataset[["oracle_id", "released_at"]], as_of)
     a = models.a.predict(hist)
     out = rows[["printing_key", "name", "set", "finish", "rarity"]].copy()
     out[["fair", "fair_lo", "fair_hi"]] = a[["fair", "fair_lo", "fair_hi"]].to_numpy()
-    if backend == "gp":
-        from mtg_price_prediction.embed import embed_images, embed_texts
-        from mtg_price_prediction.gp_features import gp_feature_frame
-
-        gp = models.gp
-        feats = gp_feature_frame(rows.assign(illustration_id=[("upload" if im is not None else None)
-                                                                for im in (images or [None] * len(rows))]),
-                                 gp.prep["wide_cols"], gp.feature_context(dataset))
-        pred = gp.predict(feats, embed_texts(rows["oracle_text"].tolist()), embed_images(images or [None] * len(rows)))
-        out["fair_gp"], out["fair_gp_lo"], out["fair_gp_hi"] = (pred[c].to_numpy() for c in ("price_mid", "price_low", "price_high"))
-        day0 = out["fair_gp"].to_numpy()
-    else:
-        day0 = out["fair"].to_numpy()
+    day0 = out["fair"].to_numpy()
     b_rows = market.custom_day0_rows(rows, day0, live, as_of, dataset[["oracle_id", "released_at"]])
     b = models.b.predict(b_rows)
     out["price_today"] = np.nan

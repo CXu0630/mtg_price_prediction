@@ -1,5 +1,5 @@
 """Scores every existing printing with the app's models and writes the static data
-the frontend reads (docs/APP_DESIGN.md §6):
+the frontend reads:
 
   web/public/data/meta.json        price date, model versions + quality, counts
   web/public/data/index.json       column-wise search index of every printing
@@ -28,7 +28,6 @@ DATASET = ROOT / "mtg-card-market-dataset" / "dataset.parquet"
 PRICES = ROOT / "data" / "prices" / "price_history.parquet"
 LIVE = ROOT / "data" / "app" / "live_rows.parquet"
 MODELS = ROOT / "models" / "app"
-GP_DIR = ROOT / "models" / "deep_gp"
 OUT = ROOT / "web" / "public" / "data"
 N_COMPS_SHOWN = 5
 
@@ -63,7 +62,7 @@ def _treatment(row) -> str:
 
 def main() -> int:
     dataset = pd.read_parquet(DATASET)
-    models = AppModels.load(MODELS, GP_DIR)
+    models = AppModels.load(MODELS)
     live = pd.read_parquet(LIVE)
     as_of = pd.Timestamp(models.manifest["price_date"])
     uni = market.universe(dataset)

@@ -76,7 +76,7 @@ def model_a_features(rows: pd.DataFrame, dataset: pd.DataFrame, set_prices: pd.D
     """The inputs Model A has beyond the base GP table (mana detail, supply, reprint/age history as of
     `as_of`, set price level), for dataset-shaped `rows`. `dataset` gives set sizes and each card's other
     printings; `set_prices` is the exported model's (set, oracle_id, lp) table of training-card prices.
-    Same definitions as scripts/experiments/exp_gp_model_a_features.py, which built the training table."""
+    scripts/add_model_a_features.py builds the training table with this same function."""
     d = rows.reset_index(drop=True)
     rate_cols = [c for c in dataset.columns if c.endswith("_rate_percent")]
     extra = pd.DataFrame(index=d.index)

@@ -1,7 +1,7 @@
 [project]
 name = "mtg-price-prediction"
 version = "0.1.0"
-description = "Predicts a price range for an MTG card printing (released or unreleased) from a comps/similarity model over rarity, mechanical properties, art, and usage data. See SPECS.md."
+description = "Predicts a price range for an MTG card printing (released or unreleased) from a comps/similarity model over rarity, mechanical properties, art, and usage data."
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.2",
@@ -13,12 +13,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "jupyter>=1.0", "ipykernel>=6.0"]
-# Modeling stack (training + inference for Model 1 / Model 2, SPECS.md §4),
-# kept separate so the base env stays fast to set up.
+# Deep GP stack (dataset build, embeddings, training, export, gp_static), kept
+# separate so the nightly pipeline (requirements/pipeline.txt) needs no torch.
 ml = [
     "scikit-learn>=1.4",
-    "lightgbm>=4.3",
-    "catboost>=1.2",
     "torch>=2.2",
     "gpytorch>=1.11",
     "safetensors>=0.4",
@@ -26,9 +24,6 @@ ml = [
     "sentence-transformers>=3.0",
     "open-clip-torch>=2.24",
 ]
-
-# Custom-card API (api/app.py) -- on top of [ml].
-api = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "pillow>=10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

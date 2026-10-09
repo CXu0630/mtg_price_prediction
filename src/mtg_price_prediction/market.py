@@ -1,7 +1,7 @@
 """Models B and C -- 14-day TCGplayer move and 14-day Card Kingdom buylist move.
 
 Rebuilt from the teammate's mtgpricepredictor (build_daily.py, price_move.py)
-on our own data, with two deliberate differences (docs/APP_DESIGN.md):
+on our own data, with two deliberate differences:
   - no Model A inputs (gap, fair_log): their own ablation shows no loss, and it
     makes B/C independent of which Model A backend the app shows
   - no Manapool level (its prices are unreliable in our data); the CK buylist

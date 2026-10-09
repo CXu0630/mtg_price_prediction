@@ -1,24 +1,15 @@
-"""Packages the best Model 1 and Model 2 into self-contained, pickle-free
-directories under models/ -- the exact layout published to Hugging Face by
-scripts/push_models_to_hub.py and loaded by
-`mtg_price_prediction.{CatBoostPredictor,DeepGPPredictor}.from_pretrained`.
+"""Packages the deep GP (training/model2.pt) into a self-contained, pickle-free directory,
+models/deep_gp/ -- the exact layout published to Hugging Face by scripts/push_models_to_hub.py and
+loaded by `mtg_price_prediction.deep_gp.DeepGPPredictor.from_pretrained`:
 
-    models/catboost/  model.cbm, config.json, README.md
-    models/deep_gp/   model.safetensors, config.json, preprocessor.json,
-                      pull_rate_defaults.parquet, README.md
+    models/deep_gp/   model.safetensors, config.json, preprocessor.json, pull_rate_defaults.parquet,
+                      set_prices.parquet, README.md, mtg_price_prediction/ (inference code)
 
-Each also gets a copy of the inference code it needs
-(mtg_price_prediction/), so the published repo is usable without this one.
+Input: training/model2.pt <- scripts/train_model2.py.
 
-Inputs (run these first):
-  - training/model1.cbm + training/model1_calibration.json
-      <- scripts/calibrate_model1.py
-  - training/model2.pt  <- scripts/train_model2.py (BEST_CONFIG)
-
-The Model 2 calibration corrections are refit here on the val split (same
-flat group-conditional method as scripts/calibrate_model2.py), and the
-exported directory is reloaded through DeepGPPredictor and checked against
-the training-code predictions before anything is written as final.
+The calibration corrections are refit here on the val split, and the exported directory is
+reloaded through DeepGPPredictor and checked against the training-code predictions -- and, for
+Model A's inputs, against features rebuilt from raw dataset rows -- before it is final.
 """
 from __future__ import annotations
 
@@ -41,8 +32,6 @@ from mtg_price_prediction.gp_features import MODEL_A_COLS, gp_feature_frame
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "models"
 MODEL_CARDS_DIR = ROOT / "model_cards"
-MODEL1_PATH = ROOT / "training" / "model1.cbm"
-MODEL1_CALIBRATION_PATH = ROOT / "training" / "model1_calibration.json"
 PULL_RATE_DEFAULTS_PATH = ROOT / "training" / "pull_rate_defaults.parquet"
 DATASET_PATH = ROOT / "mtg-card-market-dataset" / "dataset.parquet"
 MODEL_A_AS_OF = pd.Timestamp("2026-09-20")  # end of the price_avg window; age features are measured from here
@@ -54,19 +43,6 @@ def _bundle_code(out: Path, modules: list[str]) -> None:
     pkg.mkdir(exist_ok=True)
     for name in ["__init__.py", "calibration.py", *modules]:
         shutil.copy(PACKAGE_DIR / name, pkg / name)
-
-
-def export_catboost() -> None:
-    out = OUT_DIR / "catboost"
-    out.mkdir(parents=True, exist_ok=True)
-    shutil.copy(MODEL1_PATH, out / "model.cbm")
-    config = json.loads(MODEL1_CALIBRATION_PATH.read_text())
-    config = {"model_type": "catboost_multiquantile", "target": "log(price_avg_usd)",
-              "price_buckets_log": calibration.PRICE_BUCKET_LABELS, **config}
-    (out / "config.json").write_text(json.dumps(config, indent=2))
-    shutil.copy(MODEL_CARDS_DIR / "catboost.md", out / "README.md")
-    _bundle_code(out, ["catboost_model.py"])
-    print(f"catboost -> {out}  (test overall: {config['test_metrics']['overall']})")
 
 
 def _bucket_metrics(mean, lo, hi, y) -> dict:
@@ -165,13 +141,10 @@ def export_deep_gp() -> None:
     print(f"deep_gp -> {out}  (parity max |diff| = {max_diff:.2e}; test: {metrics})")
 
 
-def main(which: list[str]) -> int:
-    if "catboost" in which:
-        export_catboost()
-    if "deep_gp" in which:
-        export_deep_gp()
+def main() -> int:
+    export_deep_gp()
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:] or ["catboost", "deep_gp"]))
+    raise SystemExit(main())

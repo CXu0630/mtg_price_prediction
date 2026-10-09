@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import explore from './explore.json'
 import { Bars, Histogram, PairedBars, Stats, Table, count, money } from './charts'
 
-/* The documentation-style pages. Their text is drawn from this repo's README, docs/APP_DESIGN.md and model
-   cards, and from the teammate repo's README and reports (pwoodsCMU/mtgpricepredictor: reports/A3_buylist_bot.md,
+/* The documentation-style pages. Their text is drawn from this repo's model cards, and from the teammate
+   repo's README and reports (pwoodsCMU/mtgpricepredictor: reports/A3_buylist_bot.md,
    reports/C_final_test.md, reports/E_bot_rules.md). The exploration numbers come from
    scripts/app/build_explore_stats.py (-> explore.json). Update them together. */
 

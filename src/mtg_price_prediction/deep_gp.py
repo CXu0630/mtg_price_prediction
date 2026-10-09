@@ -1,5 +1,5 @@
 """Model 2 -- wide & deep feature extractor + sparse variational GP (deep
-kernel learning), SPECS.md S4.2.
+kernel learning).
 
 Holds the model classes and the tabular preprocessing so that training
 (scripts/train_model2.py) and inference (`DeepGPPredictor`, also what the
@@ -24,7 +24,7 @@ CATEGORICAL_COLS = [
 ]
 # power/toughness/loyalty/defense are NaN whenever a card type doesn't have
 # that stat at all (not just the already-flagged "*"/"X"-style variable
-# case) -- the neural net can't consume raw NaN the way CatBoost could, so
+# case) -- the neural net can't consume raw NaN the way tree models can, so
 # these need an explicit fresh _isna flag + impute here.
 NEEDS_ISNA_FLAG = ["power", "toughness", "loyalty", "defense"]
 # All continuous (non-boolean) numeric columns -- standardized on train

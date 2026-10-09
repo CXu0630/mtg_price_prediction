@@ -1,5 +1,5 @@
-"""Group-conditional (Mondrian) split-conformal calibration, shared by both
-models -- see scripts/calibrate_model1.py's docstring for the rationale.
+"""Group-conditional (Mondrian) split-conformal calibration for the deep GP's
+80% intervals.
 
 An interval correction is fit per *predicted*-median price bucket (true
 price isn't known at inference time) on a held-out calibration split, then

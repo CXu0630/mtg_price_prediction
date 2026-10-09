@@ -1,4 +1,4 @@
-"""Text embeddings for Model 2 (SPECS.md §4.2) -- a conventional general-
+"""Text embeddings for the deep GP -- a conventional general-
 purpose sentence-embedding model over oracle text, NOT CLIP's text tower
 (CLIP's text encoder aligns to image captions, not templated rules text --
 decided earlier in this project).

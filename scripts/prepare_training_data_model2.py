@@ -1,14 +1,12 @@
-"""Builds Model 2's training tables -- local only (gitignored), not published to HF
-(see training/README.md). Same target/split philosophy as Model 1
-(scripts/prepare_training_data.py; see its docstring and SPECS.md S3/S4.1),
-extended for the deep-kernel GP's wide+deep architecture (SPECS.md S4.2):
+"""Builds the deep GP's training tables -- local only (gitignored), not published
+to HF. Target log(price_avg), split grouped by oracle_id, for the deep-kernel
+GP's wide+deep architecture:
 
-- **Wide tabular features**: mostly the same as Model 1 (fixed-vocab
-  colors, top-N tags, legalities, variable power/toughness parsing), minus
-  raw text/oracle_text (replaced by the dense text embedding) and minus
-  `set`/`set_name`/`set_id` (same generalization argument as Model 1).
-- **Off-card features get the inference input contract from SPECS.md
-  S4.2**, not just dropped or passed through raw:
+- **Wide tabular features**: fixed-vocab colors, top-N tags, legalities,
+  variable power/toughness parsing; no raw oracle_text (replaced by the dense
+  text embedding) and no `set`/`set_name`/`set_id` (future sets are unseen).
+- **Off-card features get a defined value at inference time** for cards that
+  don't exist yet, not just dropped or passed through raw:
   - `{subtype}_rate_percent`: real value when the card is a known printing,
     else the (rarity, finish) default from
     `training/pull_rate_defaults.parquet` -- plus a per-subtype
@@ -228,8 +226,7 @@ def _fill_pull_rates(df: pd.DataFrame) -> pd.DataFrame:
 def build(tag_selection: str = "frequency") -> tuple[pd.DataFrame, np.ndarray, np.ndarray, pd.Series, pd.Series, pd.Series]:
     """`tag_selection`: "frequency" (top-N most common, the original
     method) or "correlation" (top-N by |correlation| with log-price for
-    oracle_tags/art_tags specifically, SPECS.md S4.2's tag-selection
-    follow-up). Both are archived under distinct output filenames by
+    oracle_tags/art_tags specifically). Both are archived under distinct output filenames by
     main() -- never overwrite one in place with the other, since a
     checkpoint trained against one is silently misinterpretable against
     the other (same column count, different column meanings)."""
@@ -308,7 +305,7 @@ def main(tag_selection: str = "frequency") -> int:
     """Writes `features_model2.parquet` when `tag_selection == "frequency"`
     (the live default every training script reads unless told otherwise --
     it's the empirically best-performing choice on the calibrated buckets
-    that matter, SPECS.md S4.2), or the archived
+    that matter), or the archived
     `features_model2_corr_tags.parquet` for "correlation" -- never the
     same filename for both, so a checkpoint trained against either stays
     safely reloadable."""

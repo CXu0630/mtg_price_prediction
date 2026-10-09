@@ -1,22 +1,16 @@
-"""Model 2 -- deep kernel Gaussian Process (SPECS.md S4.2).
+"""Deep kernel Gaussian process: the second fair-value model.
 
 Wide & deep architecture: a small MLP projects [text embedding, image
 embedding, categorical embeddings, wide numeric/boolean tabular features]
 into a joint embedding space, and a sparse variational GP (SVGP) puts a
 kernel over that joint space, trained end-to-end by maximizing the
-variational ELBO against log(price_avg) -- same target as Model 1 (SPECS.md
-S3), same train/test split philosophy (group by oracle_id, SPECS.md S6).
+variational ELBO against log(price_avg), with a train/val/test split grouped
+by oracle_id so no card appears in more than one split.
 
 Model classes + preprocessing live in src/mtg_price_prediction/deep_gp.py
 (shared with inference / the published model). Running this script trains
-BEST_CONFIG -> training/model2.pt.
-
-Config-driven (`Config` below) so scripts/experiments/tune_model2.py and
-scripts/experiments/check_model2_ablation_by_bucket.py can reuse `load_data()` /
-`run()` directly instead of re-deriving the pipeline -- the data loading
-(embedding joins, standardization) is the expensive/shared part and is
-identical across every hyperparameter or ablation variant, only the model
-architecture and training config change.
+BEST_CONFIG on training/features_model2_plus_a.parquet (the GP's own features
+plus Model A's inputs, scripts/add_model_a_features.py) -> training/model2.pt.
 """
 from __future__ import annotations
 
@@ -31,8 +25,7 @@ import torch
 from sklearn.model_selection import GroupShuffleSplit
 
 ROOT = Path(__file__).resolve().parent.parent
-FEATURES_PATH = ROOT / "training" / "features_model2.parquet"  # live default: frequency-selected tags
-CORRELATION_FEATURES_PATH = ROOT / "training" / "features_model2_correlation_tags.parquet"  # archived variant
+FEATURES_PATH = ROOT / "training" / "features_model2_plus_a.parquet"  # scripts/add_model_a_features.py
 TEXT_EMB_PATH = ROOT / "training" / "model2_text_emb.npy"
 IMAGE_EMB_PATH = ROOT / "training" / "model2_image_emb.npy"
 MODEL_OUT_PATH = ROOT / "training" / "model2.pt"
@@ -60,7 +53,7 @@ class Config:
     checkpoint_path: Path = MODEL_OUT_PATH
     # Which wide-feature snapshot this config trains against -- oracle_tags/
     # art_tags selection method changes column *meaning* without changing
-    # column *count* (SPECS.md S4.2's tag-correlation follow-up), so a
+    # column *count*, so a
     # checkpoint loaded against the wrong snapshot fails silently (same
     # shape, wrong semantics) rather than erroring. Recorded here and
     # threaded through load_data() so every checkpoint is self-describing.
@@ -71,11 +64,10 @@ class Config:
     # which weights large residuals quadratically and can let a handful of
     # extreme points distort the learned noise scale for everyone. (Tried,
     # rejected -- it discounts exactly the residuals we want the model
-    # paying more attention to; see SPECS.md S4.2.)
+    # paying more attention to.)
     likelihood_type: str = "gaussian"
     # Downsamples (without replacement) any log-price histogram bin above
-    # `low_price_cap` rows, same bins/cap as Model 1's rebalancing
-    # (RESAMPLE_N_BINS=30, RESAMPLE_CAP_PER_BIN=8000, SPECS.md S4.1) --
+    # `low_price_cap` rows (30 bins, 8000 rows per bin) --
     # only the couple of oversized cheap bins are actually large enough to
     # get touched.
     cap_low_price: bool = False
@@ -94,8 +86,7 @@ class Config:
         (float(np.log(200)), float(np.log(500)), 1200),
         (float(np.log(500)), float(np.log(1000)), 400),
     )
-    # Both address the same diagnosed problem (SPECS.md S4.2's interval-
-    # width follow-up): jointly-trained deep kernel GPs can collapse their
+    # Both address the same diagnosed problem (interval width): jointly-trained deep kernel GPs can collapse their
     # embedding space -- the neural feature extractor learns to make every
     # input look similarly "close" to some inducing point, since that
     # lowers the ELBO's complexity penalty, which silently destroys the
@@ -119,7 +110,7 @@ class Config:
     # beyond a bounded factor). Plain spectral norm on a feedforward layer
     # only bounds expansion -- it does nothing to stop the collapse
     # (contraction) this is meant to fix, which is why the first attempt
-    # (SPECS.md S4.2) showed no change in predictive-variance CV at all.
+    # showed no change in predictive-variance CV at all.
     residual_spectral_norm: bool = False
     residual_hidden_dim: int = 128
     residual_n_blocks: int = 2
@@ -199,10 +190,7 @@ def _build_likelihood(config: Config) -> gpytorch.likelihoods.Likelihood:
 
 def _cap_bins(y: np.ndarray, cap: int, n_bins: int, seed: int) -> np.ndarray:
     """Row positions (into `y`) to keep after capping each log-price bin at
-    `cap` rows, randomly subsampling bins that exceed it -- identical
-    method to Model 1's rebalancing (scripts/train_model1.py's
-    `_cap_bins`), reproduced here rather than imported so Model 2's
-    pipeline stays independent of Model 1's."""
+    `cap` rows, randomly subsampling bins that exceed it."""
     rng = np.random.default_rng(seed)
     edges = np.linspace(y.min(), y.max(), n_bins + 1)
     bin_ids = np.digitize(y, edges[1:-1])
@@ -274,7 +262,7 @@ def run(data: dict, config: Config, verbose: bool = True) -> dict:
     val_cat, val_wide, val_text, val_image, val_y = data["val"]
 
     # Cap first (genuinely removes rows -- a real subsetting of the
-    # training set, same as Model 1's rebalancing), then oversample on top
+    # training set), then oversample on top
     # of what's left (duplicates rows -- not genuinely new data). Distinct-
     # row count (post-cap, pre-oversample) is what `num_data` should
     # reflect: it scales the ELBO's likelihood term against the KL term,
@@ -369,9 +357,8 @@ def run(data: dict, config: Config, verbose: bool = True) -> dict:
     }
 
 
-# Best calibrated result so far (SPECS.md S4.2, "graduated oversample
-# only"): full text+image+tabular architecture, joint_dim=48, frequency-
-# selected tags, graduated $100-$1000 oversampling, no low-price cap.
+# The deployed configuration: full text+image+tabular architecture, joint_dim=48,
+# frequency-selected tags, graduated $100-$1000 oversampling, no low-price cap.
 BEST_CONFIG = Config(oversample_high_price=True, label="best")
 
 

@@ -1,7 +1,8 @@
 """Joins mtg-print-distribution's rarity/pull-rate data onto mtg-card-market-dataset/
 dataset.parquet, using MTGJSON uuid membership (booster_rates.card_uuids)
-rather than set+collector_number -- see mtg-card-market-dataset/README.md "Not yet
-joined in" for why that join key doesn't work.
+rather than set+collector_number: two products from the same set often draw
+from different sheets, so set+collector_number can't say which products a card
+comes from.
 
 Run scripts/build_merged.py first. Requires mtg-print-distribution's own
 db to have been rebuilt with card_uuids populated (its db.py migration
@@ -14,7 +15,7 @@ does this automatically) and its HF export run with --with-prices:
 A card can be pullable from more than one *type* of product (Draft vs.
 Collector vs. Jumpstart Booster, ...) at once, each with its own rate and
 price -- there's no way to collapse these into one number without knowing
-real per-product unit sales, which nobody publishes (see SPECS.md). So
+real per-product unit sales, which nobody publishes. So
 instead of one scarcity feature, this adds three columns per product
 *subtype* actually observed in the data (booster_products.subtype, the
 15-value grouping -- draft/play/set/collector/jumpstart/theme/topper/...,

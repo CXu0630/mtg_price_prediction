@@ -1,9 +1,8 @@
-"""CLIP image embeddings for Model 2 (SPECS.md §4.2), over the art_crop
+"""CLIP image embeddings for the deep GP, over the art_crop
 images fetched by scripts/fetch_card_art.py.
 
 Model: CLIP ViT-B/32 (OpenAI's original checkpoint, via open_clip) --
-a standard, well-tested default; frozen, no fine-tuning (SPECS.md §4.3
-deferred that deliberately). One embedding per distinct `illustration_id`,
+a standard, well-tested default; frozen, no fine-tuning. One embedding per distinct `illustration_id`,
 matching how the images themselves were fetched (dedup, not one per row).
 """
 from __future__ import annotations

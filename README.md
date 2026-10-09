@@ -1,167 +1,80 @@
-# mtg-price-prediction
+# MTG Price Intelligence
 
-Predicts an **80% price range** (USD) for a Magic: The Gathering card
-printing (one card in one set, treatment and finish) from what's printed on
-the card. It works for released cards and for hypothetical or unreleased ones.
-The design doc and full experiment log are in [SPECS.md](SPECS.md).
+Prices Magic: The Gathering cards. For any printing, or a card that doesn't exist yet, the app gives a
+fair value with an 80% range, a 14-day TCGplayer forecast with a BUY / SELL / HOLD signal, and a 14-day
+Card Kingdom buylist forecast.
 
-## Where things stand
+- **App:** https://cxu0630.github.io/mtg_price_prediction/ (static site, rebuilt nightly)
+- **Deep GP model:** [`CXu0630/mtg-price-deep-gp`](https://huggingface.co/CXu0630/mtg-price-deep-gp)
+- **Datasets:** [`CXu0630/mtg-card-market-dataset`](https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset),
+  [`CXu0630/mtg-print-distribution`](https://huggingface.co/datasets/CXu0630/mtg-print-distribution)
+- **App assets (nightly models, precomputed GP outputs):** [`CXu0630/mtg-price-app-assets`](https://huggingface.co/datasets/CXu0630/mtg-price-app-assets)
 
-There are two models, both published on Hugging Face as public repos:
-
-| | Model 1: CatBoost | Model 2: deep kernel GP |
+| Model | Question | Where it runs |
 |---|---|---|
-| HF repo | [`CXu0630/mtg-price-catboost`](https://huggingface.co/CXu0630/mtg-price-catboost) | [`CXu0630/mtg-price-deep-gp`](https://huggingface.co/CXu0630/mtg-price-deep-gp) |
-| inputs | 93 tabular features | ~465 tabular features + oracle-text embedding + card-art embedding |
-| 80% coverage, $10–$100 | 71.8% | **76.0%** |
-| 80% coverage, $100+ | 52.3% | **67.6%** |
-| 80% coverage, overall | 78.1% | 80.5% |
-| median error (log-price MAE) | **0.52** | 0.57 |
-| trains in | ~5 min CPU | ~1 min CPU, but needs ~3.6 GB of card art + embeddings first |
+| A: fair value (boosted trees) | What should this printing cost, from what it is? | Retrained nightly; in the browser for custom cards |
+| Deep kernel GP | Same question, plus rules text and art; finds similar cards | Trained once; outputs precomputed for every printing |
+| B: TCGplayer forecast | Where will the TCGplayer price be in 14 days? | Retrained nightly; in the browser for custom cards |
+| C: buylist forecast | What will Card Kingdom's buylist pay in 14 days? | Retrained nightly |
 
-Coverage is after per-price-bucket conformal calibration, on a held-out
-split grouped by `oracle_id`. CatBoost is the better point predictor. The
-GP's intervals are better calibrated where it matters (expensive cards).
-Each model was evaluated on its own split, so the comparison is approximate.
-The full results history, including what was tried and didn't work, is in
-SPECS.md §4.1–4.2.
+Models A, B and C follow the method of [pwoodsCMU/mtgpricepredictor](https://github.com/pwoodsCMU/mtgpricepredictor),
+retrained here on our data.
 
-**Open next steps** (details in SPECS.md):
-- Multi-seed validation. Every number above is a single seed and split.
-- $100+ coverage is still below 80%.
-- The GP's per-card uncertainty is collapsed (near-constant std).
-- A quantile-regression head (`scripts/experiments/train_model2_quantile.py`)
-  is a competitive alternative to the GP with genuinely per-card interval
-  widths. It isn't published, and there's no decision yet on which becomes
-  the default.
-- The live-comps staleness protection (SPECS.md §3) is not built.
-- No EDHREC usage join yet.
+## Layout
 
-## The app
-
-A web app over all of this: give it a list of cards (real printings or custom
-ones) and it returns fair value (Model A or the deep GP), a 14-day TCGplayer
-forecast with BUY/SELL/HOLD (Model B) and a 14-day Card Kingdom buylist forecast
-(Model C). Design and status: [docs/APP_DESIGN.md](docs/APP_DESIGN.md).
-
-Run it locally (after the "Setup" below, plus `pip install -e ".[ml,api]"`):
-
-```bash
-python scripts/app/refresh_prices.py      # today's prices from MTGJSON
-python scripts/app/train_models.py        # Models A, B, C (~8 min)
-python scripts/app/build_gp_static.py     # deep-GP values + comps (needs embeddings/, once)
-python scripts/app/score_all.py           # -> web/public/data
-python scripts/app/export_web_models.py --fixture   # Models A + B for in-browser custom cards
-cd web && npm install && npm test && npm run dev    # parity test, then http://localhost:5173
-```
-
-Custom cards are priced in the browser by Models A and B, so the whole app is a
-static site. The nightly GitHub Action (`.github/workflows/nightly.yml`) runs these
-steps and deploys to GitHub Pages. `api/` is an optional server that would add the
-deep GP for custom cards (not deployed).
-
-## Using the published models
-
-Each HF repo bundles its own inference code (`mtg_price_prediction/`) and has
-a model card with a usage example. From this repo:
-
-```python
-from mtg_price_prediction.catboost_model import CatBoostPredictor
-from mtg_price_prediction.deep_gp import DeepGPPredictor
-
-cb = CatBoostPredictor.from_pretrained("CXu0630/mtg-price-catboost")
-cb.predict(features_df)                      # rows shaped like training/features.parquet
-
-gp = DeepGPPredictor.from_pretrained("CXu0630/mtg-price-deep-gp")
-gp.predict(features_df, text_emb, image_emb) # rows shaped like training/features_model2.parquet
-```
-
-Both return `price_low` / `price_mid` / `price_high` in USD.
+| Path | What |
+|---|---|
+| `.github/workflows/nightly.yml` | Nightly job: refresh prices, retrain A/B/C, score every printing, export A/B for the browser, parity test, build, deploy to GitHub Pages |
+| `scripts/app/` | The nightly pipeline steps, plus `build_gp_static.py` (GP outputs) and `build_explore_stats.py` (Data page) |
+| `src/mtg_price_prediction/` | Shared package: Model A (`fair_value`), Models B/C (`market`), deep GP (`deep_gp`, `gp_features`), custom cards (`cards`), scoring, calibration |
+| `scripts/*.py` | Dataset build and deep GP training (below) |
+| `web/` | React + TypeScript front end; `web/src/model/` is the browser port of Models A and B |
+| `model_cards/` | Hugging Face cards for the deep GP and the app assets |
+| `tests/` | Python tests (`pytest`); the front end's parity test is `npm test` in `web/` |
 
 ## Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev,ml]"
-hf auth login        # only needed to push models
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev,ml]"          # the nightly pipeline alone needs only requirements/pipeline.txt
+cd web && npm ci
 ```
 
-## Reproducing the models
-
-All commands run from the repo root. Every output is gitignored and
-regenerated by the scripts.
-
-**1. Get the dataset.** The joined dataset is published on HF, so download it:
+## Run the app pipeline locally
 
 ```bash
-python scripts/fetch_market_dataset.py      # -> mtg-card-market-dataset/dataset.parquet (45 MB)
+python scripts/app/assets.py fetch --no-app       # dataset, deep GP, precomputed GP outputs from HF
+python scripts/app/refresh_prices.py              # latest MTGJSON prices
+python scripts/app/train_models.py                # Models A, B, C
+python scripts/app/score_all.py                   # every printing -> web/public/data/
+python scripts/app/export_web_models.py --fixture # Models A and B for the browser + parity fixture
+cd web && npm test && npm run dev                 # parity test, then the site at localhost:5173
 ```
 
-To rebuild it from sources instead, run `fetch_mtg_card_prices.py` →
-`build_merged.py` → `join_pull_rates.py` → `join_price.py`. The pull-rate
-join needs a checkout of the separate `mtg-print-distribution` repo at
-`./mtg-print-distribution/` (see `join_pull_rates.py`'s docstring).
-
-**2. Model 1 (CatBoost)**, CPU, a few minutes:
+## Reproduce the dataset
 
 ```bash
-python scripts/prepare_training_data.py     # -> training/features.parquet
-python scripts/calibrate_model1.py          # trains best config + calibrates -> training/model1.cbm, model1_calibration.json
+python scripts/fetch_market_dataset.py            # or download the published dataset directly
 ```
 
-**3. Model 2 (deep GP).** This needs the card art and frozen embeddings:
+To rebuild it from sources: `fetch_mtg_card_prices.py` → `build_merged.py` → `join_pull_rates.py` →
+`join_price.py`. The pull-rate join reads the `mtg-print-distribution` export from
+`./mtg-print-distribution/data/exports/hf_dataset/` (the files of the published dataset).
+
+## Reproduce the deep GP
 
 ```bash
-python scripts/fetch_mtg_card_prices.py     # raw Scryfall data (embed_text needs all_parts for token text)
-python scripts/fetch_card_art.py            # ~47k art crops, ~3.6 GB -> card_art/
-python scripts/embed_text.py                # all-mpnet-base-v2 -> embeddings/
-python scripts/embed_images.py              # CLIP ViT-B-32-quickgelu (uses MPS if available) -> embeddings/
-python scripts/build_pull_rate_defaults.py  # -> training/pull_rate_defaults.parquet
-python scripts/prepare_training_data_model2.py  # -> training/features_model2.parquet + *_emb.npy
-python scripts/train_model2.py              # BEST_CONFIG -> training/model2.pt (CPU; gpytorch is unreliable on MPS)
-python scripts/calibrate_model2.py          # per-bucket coverage report
-python scripts/show_model2_examples.py      # predictions for named held-out cards
+python scripts/fetch_card_art.py                  # art crops, ~3.6 GB -> card_art/
+python scripts/embed_text.py                      # all-mpnet-base-v2 -> embeddings/
+python scripts/embed_images.py                    # CLIP ViT-B/32 -> embeddings/
+python scripts/build_pull_rate_defaults.py        # -> training/pull_rate_defaults.parquet
+python scripts/prepare_training_data_model2.py    # -> training/features_model2.parquet
+python scripts/add_model_a_features.py            # + Model A's inputs -> training/features_model2_plus_a.parquet
+python scripts/train_model2.py                    # -> training/model2.pt (CPU)
+python scripts/export_models.py                   # -> models/deep_gp/, with parity checks
+python scripts/push_models_to_hub.py              # -> CXu0630/mtg-price-deep-gp
+python scripts/app/build_gp_static.py             # GP price + similar cards for every printing
 ```
 
-**4. Export and publish:**
-
-```bash
-python scripts/export_models.py             # -> models/{catboost,deep_gp}/ (also checks the export reproduces the training-code predictions)
-python scripts/push_models_to_hub.py        # -> public HF repos above
-```
-
-**5. Presentation figures** (needs the trained models from steps 2–3):
-
-```bash
-python scripts/experiments/feature_importance.py   # permutation importance -> figures/data/feature_importance.csv (~5 min)
-python scripts/make_figures.py                     # -> figures/price_distribution.png, figures/feature_importance.png
-```
-
-Model cards live in `model_cards/` and are copied in by the export. If you
-retrain, update the metrics tables in the cards.
-
-## Layout
-
-| path | what |
-|---|---|
-| `src/mtg_price_prediction/` | Shared package: model classes + preprocessing (`deep_gp.py`), `CatBoostPredictor` (`catboost_model.py`), conformal calibration (`calibration.py`). Training and inference both use it. |
-| `scripts/` | The main pipeline, in the order above. |
-| `scripts/experiments/` | Tuning, ablation and alternative-model scripts behind the SPECS.md results (rebalancing, tag ablations, inducing-point sweep, robust likelihoods, quantile head, ...). Not needed to reproduce the best models. |
-| `model_cards/` | HF model card sources. |
-| `scripts/app/`, `api/`, `web/` | The app: nightly pipeline, custom-card API, React frontend ([docs/APP_DESIGN.md](docs/APP_DESIGN.md)). |
-| `figures/` | Presentation figures from `scripts/make_figures.py` (+ the data they're drawn from in `figures/data/`). |
-| `mtg-card-market-dataset/` | The joined training dataset (one row per printing × finish) and its docs: [README](mtg-card-market-dataset/README.md), [COLUMNS.md](mtg-card-market-dataset/COLUMNS.md). Published as [`CXu0630/mtg-card-market-dataset`](https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset). |
-| `mtg-card-prices/` | Third-party source data ([`pcwoods/mtg-card-prices`](https://huggingface.co/datasets/pcwoods/mtg-card-prices)). |
-| `card_art/`, `embeddings/` | Model 2's art crops and frozen embeddings. See each folder's README. |
-| `training/` | Feature tables and checkpoints. See [training/README.md](training/README.md). |
-| `mtg-print-distribution/` | *Separate repo* (booster pull rates), gitignored here. Only needed to rebuild the dataset. |
-
-## Data and licensing
-
-Large data is not committed to git. The joined dataset is on HF, and
-everything else is regenerated by the scripts. Card data comes from Scryfall,
-prices from TCGplayer (via `pcwoods/mtg-card-prices`), and the dataset and
-models are released under WotC's
-[Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy).
-This is an unofficial fan project, not endorsed by Wizards of the Coast.
+*Magic: The Gathering* is a trademark of Wizards of the Coast. This is an unofficial fan project, not
+produced or endorsed by Wizards of the Coast.

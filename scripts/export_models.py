@@ -36,6 +36,7 @@ from safetensors.torch import save_file
 from train_model2 import MODEL_OUT_PATH as MODEL2_PATH, Config, build_model, load_data, _predict, _split
 from mtg_price_prediction import calibration
 from mtg_price_prediction.deep_gp import Z_80, DeepGPPredictor
+from mtg_price_prediction.gp_features import MODEL_A_COLS, gp_feature_frame
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "models"
@@ -43,6 +44,8 @@ MODEL_CARDS_DIR = ROOT / "model_cards"
 MODEL1_PATH = ROOT / "training" / "model1.cbm"
 MODEL1_CALIBRATION_PATH = ROOT / "training" / "model1_calibration.json"
 PULL_RATE_DEFAULTS_PATH = ROOT / "training" / "pull_rate_defaults.parquet"
+DATASET_PATH = ROOT / "mtg-card-market-dataset" / "dataset.parquet"
+MODEL_A_AS_OF = pd.Timestamp("2026-09-20")  # end of the price_avg window; age features are measured from here
 PACKAGE_DIR = ROOT / "src" / "mtg_price_prediction"
 
 
@@ -123,9 +126,25 @@ def export_deep_gp() -> None:
         "calibration_corrections": {str(b): c for b, c in corrections.items()},
         "test_metrics": metrics,
     }, indent=2))
+    model_a_inputs = {}
+    if any(c in data["prep"]["wide_cols"] for c in MODEL_A_COLS):
+        # Set price level is built from the training split's prices only; ship that table so serving
+        # computes it the same way (gp_features.model_a_features).
+        rows = pd.read_parquet(config.features_path, columns=["__printing_key", "__group_oracle_id",
+                                                             "__target_log_price_avg"])
+        train_idx, _, _ = _split(rows["__group_oracle_id"].to_numpy(), config.seed)
+        ds = pd.read_parquet(DATASET_PATH, columns=["printing_key", "set", "oracle_id"]).set_index("printing_key")
+        tr = rows.iloc[train_idx]
+        card_lp = (ds.loc[tr["__printing_key"].to_numpy()].reset_index(drop=True)
+                   .assign(lp=tr["__target_log_price_avg"].to_numpy())
+                   .groupby(["set", "oracle_id"], as_index=False)["lp"].max())
+        card_lp.to_parquet(out / "set_prices.parquet", index=False)
+        model_a_inputs = {"model_a_inputs": {"as_of": str(MODEL_A_AS_OF.date()), "set_prices": "set_prices.parquet"}}
+    cfg_path = out / "config.json"
+    cfg_path.write_text(json.dumps({**json.loads(cfg_path.read_text()), **model_a_inputs}, indent=2))
     shutil.copy(PULL_RATE_DEFAULTS_PATH, out / "pull_rate_defaults.parquet")
     shutil.copy(MODEL_CARDS_DIR / "deep_gp.md", out / "README.md")
-    _bundle_code(out, ["deep_gp.py"])
+    _bundle_code(out, ["deep_gp.py", "gp_features.py"])
 
     # Parity check: reload through the public inference path on the test rows.
     test_rows = pd.read_parquet(config.features_path)
@@ -134,6 +153,15 @@ def export_deep_gp() -> None:
     reloaded = predictor.predict(test_rows.iloc[test_idx], data["test"][2].numpy(), data["test"][3].numpy())
     max_diff = float(np.max(np.abs(np.log(reloaded["price_mid"].to_numpy()) - test_mean)))
     assert max_diff < 1e-3, f"exported deep GP disagrees with training code (max |diff| = {max_diff})"
+    if model_a_inputs:
+        # Serving path: rebuild the test rows' features from raw dataset rows, as build_gp_static.py does.
+        dataset = pd.read_parquet(DATASET_PATH)
+        raw = dataset.set_index("printing_key").loc[test_rows.iloc[test_idx]["__printing_key"].to_numpy()].reset_index()
+        feats = gp_feature_frame(raw, predictor.prep["wide_cols"], predictor.feature_context(dataset))
+        served = predictor.predict(feats, data["test"][2].numpy(), data["test"][3].numpy())
+        serve_diff = float(np.max(np.abs(np.log(served["price_mid"].to_numpy()) - test_mean)))
+        assert serve_diff < 1e-3, f"serving features disagree with the training table (max |diff| = {serve_diff})"
+        print(f"  serving-path parity max |diff| = {serve_diff:.2e}")
     print(f"deep_gp -> {out}  (parity max |diff| = {max_diff:.2e}; test: {metrics})")
 
 

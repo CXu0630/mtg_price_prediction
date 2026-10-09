@@ -46,7 +46,7 @@ export function Bars({ rows, format, signed = false, max }: {
   )
 }
 
-/** Two series per row (e.g. CatBoost vs Deep GP), with a legend; the second series is a lighter tint. */
+/** Two series per row (e.g. boosted trees vs deep GP), with a legend; the second series is a lighter tint. */
 export function PairedBars({ rows, series, format }: {
   rows: { label: string; a?: number; b?: number }[]
   series: [string, string]

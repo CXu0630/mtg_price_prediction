@@ -115,7 +115,7 @@ def score_custom(cards: list[CustomCard], dataset: pd.DataFrame, models: AppMode
         gp = models.gp
         feats = gp_feature_frame(rows.assign(illustration_id=[("upload" if im is not None else None)
                                                                 for im in (images or [None] * len(rows))]),
-                                 gp.prep["wide_cols"])
+                                 gp.prep["wide_cols"], gp.feature_context(dataset))
         pred = gp.predict(feats, embed_texts(rows["oracle_text"].tolist()), embed_images(images or [None] * len(rows)))
         out["fair_gp"], out["fair_gp_lo"], out["fair_gp_hi"] = (pred[c].to_numpy() for c in ("price_mid", "price_low", "price_high"))
         day0 = out["fair_gp"].to_numpy()

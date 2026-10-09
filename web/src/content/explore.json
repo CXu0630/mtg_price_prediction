@@ -407,66 +407,66 @@
  "importance": [
   {
    "label": "EDHREC rank",
-   "catboost": 154.7,
-   "gp": 75.6
-  },
-  {
-   "label": "rarity",
-   "catboost": 52.2,
-   "gp": 5.9
-  },
-  {
-   "label": "# paper printings",
-   "catboost": 41.9,
-   "gp": 8.3
+   "model_a": 178.7,
+   "gp": 95.1
   },
   {
    "label": "pull rates",
-   "catboost": 39.5,
-   "gp": 35.9
+   "model_a": 62.7,
+   "gp": 46.4
   },
   {
-   "label": "legalities",
-   "catboost": 39.1,
-   "gp": 22.9
+   "label": "# printings",
+   "model_a": 54.1,
+   "gp": 17.6
+  },
+  {
+   "label": "set price level",
+   "model_a": 52.8,
+   "gp": 22.6
+  },
+  {
+   "label": "card / printing age",
+   "model_a": 50.9,
+   "gp": 33.3
+  },
+  {
+   "label": "rarity",
+   "model_a": 37.4,
+   "gp": 3.3
   },
   {
    "label": "finish",
-   "catboost": 35.4,
-   "gp": 27.7
-  },
-  {
-   "label": "set type",
-   "catboost": 27.5,
-   "gp": 11.9
-  },
-  {
-   "label": "reserved / promo flags",
-   "catboost": 14.2,
-   "gp": 23.8
-  },
-  {
-   "label": "frame",
-   "catboost": 21.6,
-   "gp": 11.1
+   "model_a": 22.0,
+   "gp": 25.7
   },
   {
    "label": "EDHREC salt",
-   "catboost": 12.0,
-   "gp": 8.1
+   "model_a": 15.1,
+   "gp": 8.4
   },
   {
-   "label": "border color",
-   "catboost": 10.2,
-   "gp": 3.7
+   "label": "reserved / promo flags",
+   "model_a": 5.7,
+   "gp": 13.4
+  },
+  {
+   "label": "legalities",
+   "model_a": 9.2,
+   "gp": 10.8
+  },
+  {
+   "label": "set type",
+   "model_a": 6.5,
+   "gp": 3.2
   },
   {
    "label": "text embedding",
-   "gp": 7.7
+   "gp": 4.3
   },
   {
    "label": "image embedding",
-   "gp": 6.3
+   "gp": 2.5
   }
  ]
 }

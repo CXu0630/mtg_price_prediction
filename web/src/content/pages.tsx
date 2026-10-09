@@ -54,7 +54,7 @@ const DOCS: Block[] = [
         'Attributes and supply: rarity, finish, treatments, rules-text tags, legality, EDHREC rank, age, reprints, set size, pull rates. No price history.',
         'Fair value and 80% range'],
       ['Deep GP (fair value)', 'Same question, a second opinion',
-        '~465 tabular features plus oracle-text (all-mpnet-base-v2) and card-art (CLIP) embeddings, through a sparse variational Gaussian process',
+        'The boosted-tree model\'s inputs plus oracle-text (all-mpnet-base-v2) and card-art (CLIP) embeddings, through a sparse variational Gaussian process',
         'Fair value, 80% range and similar cards'],
       ['TCGplayer forecast', 'Where will the TCGplayer price be in 14 days?',
         'Momentum, volatility, release timing, EDHREC rank, moves of the card\'s other printings and its set, CK / Cardmarket levels vs TCGplayer',
@@ -65,11 +65,11 @@ const DOCS: Block[] = [
     ]} />
   ), note: 'The fair-value model and both forecasts are gradient-boosted trees (the forecasts are quantile models with conformal calibration), retrained here from the teammate\'s published method, where they are called Models A, B and C. The forecasts were retrained without the fair-value model\'s inputs, so switching fair-value models never changes a forecast.' },
   { key: 'accuracy-a', title: 'How accurate is fair value?', body: (
-    <Table head={['80% range covers the true price', 'CatBoost', 'Deep GP']} align={['l', 'r', 'r']} rows={[
-      ['under $1', '77.6%', '83.9%'], ['$1–10', '82.9%', '75.4%'], ['$10–100', '71.8%', '76.0%'],
-      ['$100+', '52.3%', '67.6%'], ['overall', '78.1%', '80.5%'], ['typical error (log MAE)', '0.52', '0.57'],
+    <Table head={['80% range covers the true price', 'Boosted trees', 'Deep GP']} align={['l', 'r', 'r']} rows={[
+      ['under $1', '82.1%', '84.7%'], ['$1–10', '77.7%', '73.7%'], ['$10–100', '75.6%', '75.9%'],
+      ['$100+', '65.4%', '71.4%'], ['overall', '80.0%', '80.5%'], ['typical error (log MAE)', '0.43', '0.54'],
     ]} />
-  ), note: 'Held-out cards never seen in training, split by card. The deep GP\'s ranges hold up better on expensive cards; CatBoost (a close cousin of the boosted-tree model) has the sharper midpoint. The boosted-tree model itself: out-of-fold log error 0.44, 80% coverage 80.0%.' },
+  ), note: 'Held-out cards never seen in training, split by card. Both models see the same card attributes and supply; the deep GP also reads rules text and art. The boosted trees have the sharper midpoint; the deep GP\'s ranges hold up better on expensive cards.' },
   { key: 'accuracy-b', title: 'How accurate are the 14-day forecasts?', body: (
     <Table head={['Final test, Sep 14–18', 'Rank corr.', 'BUY right', 'SELL right', '80% coverage']}
       align={['l', 'r', 'r', 'r', 'r']} rows={[
@@ -103,10 +103,10 @@ const DOCS: Block[] = [
       <li>The site is deployed to GitHub Pages. No server: custom cards are priced on your machine.</li>
     </ol>
   ), note: (
-    <>Source: <a href="https://github.com/CXu0630/mtg_price_predict_catboost_deep_gp">github.com/CXu0630/mtg_price_predict_catboost_deep_gp</a>.
+    <>Source: <a href="https://github.com/CXu0630/mtg_price_prediction">github.com/CXu0630/mtg_price_prediction</a>.
       Models and dataset on Hugging Face: <a href="https://huggingface.co/CXu0630/mtg-price-deep-gp">mtg-price-deep-gp</a>,{' '}
-      <a href="https://huggingface.co/CXu0630/mtg-price-catboost">mtg-price-catboost</a>,{' '}
-      <a href="https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset">mtg-card-market-dataset</a>.</>
+      <a href="https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset">mtg-card-market-dataset</a>,{' '}
+      <a href="https://huggingface.co/datasets/CXu0630/mtg-print-distribution">mtg-print-distribution</a>.</>
   ) },
 ]
 
@@ -199,8 +199,8 @@ const DATA: Block[] = [
     <Bars format={money} rows={explore.edhrec.map((r) => ({ label: r.label, value: r.median }))} />
   ), note: `Cards in the top fifth of Commander play have a median price ${(explore.edhrec[0].median / explore.edhrec[4].median).toFixed(0)}× the bottom fifth's. Reserved List printings (never reprinted) have a median of ${money(explore.reserved.median_reserved)}, against ${money(explore.reserved.median_other)} for everything else.` },
   { key: 'importance', title: 'What drives the fair-value models', body: (
-    <PairedBars series={['CatBoost', 'Deep GP']} format={(v) => `+${Math.round(v)}%`}
-      rows={explore.importance.map((r) => ({ label: r.label, a: r.catboost ?? undefined, b: r.gp ?? undefined }))} />
+    <PairedBars series={['Boosted trees', 'Deep GP']} format={(v) => `+${Math.round(v)}%`}
+      rows={explore.importance.map((r) => ({ label: r.label, a: r.model_a ?? undefined, b: r.gp ?? undefined }))} />
   ), note: 'Permutation importance: how much each model\'s held-out error rises when that input is shuffled. Correlated inputs share credit (rarity ↔ pull rates).' },
   { key: 'finish', title: 'Median price by finish', body: (
     <Bars format={money} rows={explore.finish.map((r) => ({ label: r.label, value: r.median, note: `${count(r.n)} printings` }))} />

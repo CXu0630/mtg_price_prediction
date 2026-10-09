@@ -3,8 +3,8 @@
     python scripts/app/build_explore_stats.py   # -> web/src/content/explore.json
 
 Reads the joined training dataset (mtg-card-market-dataset/dataset.parquet; fetch it with
-scripts/fetch_market_dataset.py) and the permutation-importance table behind figures/feature_importance.png
-(figures/data/feature_importance.csv). The output is small and committed, so the site needs no extra data.
+scripts/fetch_market_dataset.py) and the fair-value models' permutation importance
+(figures/data/model_a_importance.csv, figures/data/gp_importance.csv). The output is small and committed, so the site needs no extra data.
 """
 import json
 from pathlib import Path
@@ -14,20 +14,21 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 DATASET = ROOT / "mtg-card-market-dataset" / "dataset.parquet"
-IMPORTANCE = ROOT / "figures" / "data" / "feature_importance.csv"
+# Permutation importance of the two fair-value models (see each file's producing script in mtg-price-report).
+IMPORTANCE = [ROOT / "figures" / "data" / "model_a_importance.csv", ROOT / "figures" / "data" / "gp_importance.csv"]
 OUT = ROOT / "web" / "src" / "content" / "explore.json"
 
 BUCKETS = [(0, 1, "under $1"), (1, 10, "$1–10"), (10, 100, "$10–100"), (100, np.inf, "$100+")]
 RARITY_ORDER = ["common", "uncommon", "rare", "mythic", "special", "bonus"]
 FEATURE_LABELS = {  # as in scripts/make_figures.py
     "edhrec_rank": "EDHREC rank", "edhrec_salt": "EDHREC salt", "penny_rank": "Penny Dreadful rank",
-    "num_paper_printings": "# paper printings", "set_type": "set type", "border_color": "border color",
+    "num_paper_printings": "# printings", "set price level": "set price level", "set_type": "set type", "border_color": "border color",
     "security_stamp": "security stamp", "conv_mana_cost": "mana value", "has_image": "has art image",
     "card flags (reserved, promo, reprint, borderless, ...)": "reserved / promo flags",
     "P/T / loyalty / defense": "P/T, loyalty", "oracle_tags": "oracle tags", "art_tags": "art tags",
     "type_tags": "type tags", "promo_types": "promo types", "frame_effects": "frame effects",
 }
-TOP_FEATURES = 11  # same selection as figures/feature_importance.png: top 11 + both embeddings
+TOP_FEATURES = 11  # top 11 inputs both models share, plus both embeddings
 ALWAYS_SHOW = ["text embedding", "image embedding"]
 
 
@@ -79,14 +80,15 @@ def main():
     rank_bins = pd.qcut(p.loc[has_rank, "edhrec_rank"], 5, labels=["top 20%", "20–40%", "40–60%", "60–80%", "bottom 20%"])
     edhrec = [{"label": str(k), "median": r(v)} for k, v in p.loc[has_rank].groupby(rank_bins, observed=True)["price_avg"].median().items()]
 
-    imp = pd.read_csv(IMPORTANCE)
+    imp = pd.concat([pd.read_csv(f) for f in IMPORTANCE])
+    imp = imp[imp["group"].isin(set(imp.loc[imp["model"] == "Deep GP", "group"]))]
     ranked = imp.groupby("group")["% of base (all)"].max().sort_values(ascending=False)
     keep = list(ranked.head(TOP_FEATURES).index) + [g for g in ALWAYS_SHOW if g not in ranked.head(TOP_FEATURES).index]
     importance = []
     for g in sorted(keep, key=lambda g: -ranked[g]):
         e = {"label": FEATURE_LABELS.get(g, g)}
         for _, row in imp[imp["group"] == g].iterrows():
-            e["catboost" if row["model"] == "CatBoost" else "gp"] = r(row["% of base (all)"], 1)
+            e["model_a" if row["model"] == "Model A" else "gp"] = r(row["% of base (all)"], 1)
         importance.append(e)
 
     out = {

@@ -261,9 +261,18 @@ class DeepGPPredictor:
     preprocessor.json, model.safetensors) and predicts calibrated 80% price
     ranges. Gaussian likelihood only (the only one published)."""
 
-    def __init__(self, model: DKLModel, likelihood, prep: dict, config: dict):
-        self.model, self.likelihood, self.prep, self.config = model, likelihood, prep, config
+    def __init__(self, model: DKLModel, likelihood, prep: dict, config: dict, path: Path | None = None):
+        self.model, self.likelihood, self.prep, self.config, self.path = model, likelihood, prep, config, path
         self.corrections = {int(k): v for k, v in config["calibration_corrections"].items()}
+
+    def feature_context(self, dataset: pd.DataFrame) -> dict | None:
+        """What gp_features.gp_feature_frame needs for a GP trained with Model A's inputs: the full
+        dataset (set sizes, reprint history), the training cards' set prices (set_prices.parquet) and
+        the as-of date for age features. None for a GP without those inputs."""
+        if "model_a_inputs" not in self.config:
+            return None
+        return {"dataset": dataset, "set_prices": pd.read_parquet(self.path / "set_prices.parquet"),
+                "as_of": pd.Timestamp(self.config["model_a_inputs"]["as_of"])}
 
     @classmethod
     def from_pretrained(cls, repo_id_or_path: str) -> "DeepGPPredictor":
@@ -289,7 +298,7 @@ class DeepGPPredictor:
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         model.load_state_dict({k[len("model."):]: v for k, v in state.items() if k.startswith("model.")})
         likelihood.load_state_dict({k[len("likelihood."):]: v for k, v in state.items() if k.startswith("likelihood.")})
-        return cls(model, likelihood, prep, config)
+        return cls(model, likelihood, prep, config, path)
 
     def predict(self, features: pd.DataFrame, text_emb: np.ndarray, image_emb: np.ndarray) -> pd.DataFrame:
         """`features`: rows shaped like training/features_model2.parquet

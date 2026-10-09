@@ -46,7 +46,7 @@ def stored_embeddings(ds: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
 def main() -> int:
     ds = pd.read_parquet(DATASET)
     gp = DeepGPPredictor.from_pretrained(str(GP_DIR))
-    feats = gp_feature_frame(ds, gp.prep["wide_cols"])
+    feats = gp_feature_frame(ds, gp.prep["wide_cols"], gp.feature_context(ds))
     text, image = stored_embeddings(ds)
     pred = gp.predict(feats, text, image)
 

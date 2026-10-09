@@ -21,7 +21,7 @@ datasets:
 > Magic: The Gathering is a trademark of Wizards of the Coast, LLC. This is an
 > unofficial fan project, not produced or endorsed by Wizards of the Coast.
 
-**Source code, training pipeline and design doc:** [mtg_price_predict_catboost_deep_gp](https://github.com/CXu0630/mtg_price_predict_catboost_deep_gp)
+**Source code, training pipeline and design doc:** [mtg_price_prediction](https://github.com/CXu0630/mtg_price_prediction)
 
 Predicts an **80% price range** (USD) for a Magic: The Gathering card
 printing (one card in one set/treatment/finish) from 93 tabular features:

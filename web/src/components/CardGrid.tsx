@@ -100,6 +100,9 @@ function Tile({ front, back, replacement, showBack, delay, flipIn, shifting, awa
 
   useEffect(() => { // turn to whichever side `showBack` asks for, the short way round
     if (awayOn) return // turned away: coming back restores the right side
+    // Turning to the back while it is hidden: give it its real content now. (A card still flipping in when
+    // Predict is pressed never finished a turn, so its back would otherwise stay a card back.)
+    if (showBack && onBackKind && Math.round(deg / 180) % 2 === 0) setBackKind(onBackKind)
     setDeg((d) => {
       const facingBack = Math.round(d / 180) % 2 === 1
       return facingBack === showBack ? d : d + 180

@@ -13,7 +13,7 @@ tags:
 > Magic: The Gathering is a trademark of Wizards of the Coast, LLC. This is an
 > unofficial fan project, not produced or endorsed by Wizards of the Coast.
 
-Artifacts the [MTG price-range app](https://github.com/CXu0630/mtg_price_predict_catboost_deep_gp)
+Artifacts the [MTG price-range app](https://github.com/CXu0630/mtg_price_prediction)
 loads at runtime, refreshed by its nightly pipeline (`scripts/app/`). Not meant
 as a standalone dataset — see
 [`CXu0630/mtg-card-market-dataset`](https://huggingface.co/datasets/CXu0630/mtg-card-market-dataset)

@@ -24,7 +24,7 @@ sdk: docker
 app_port: 7860
 ---
 
-Custom-card pricing API for the [MTG price-range app](https://github.com/CXu0630/mtg_price_predict_catboost_deep_gp)
+Custom-card pricing API for the [MTG price-range app](https://github.com/CXu0630/mtg_price_prediction)
 (`api/app.py`). `GET /health`, `POST /predict`. Unofficial fan project; Magic: The Gathering is a trademark of
 Wizards of the Coast.
 """
